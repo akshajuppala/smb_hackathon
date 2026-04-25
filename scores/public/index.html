@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Insurance Readiness Framework</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <div>
+          <p class="kicker">YAML Source of Truth</p>
+          <h1>Insurance Readiness Framework</h1>
+        </div>
+        <div class="summary" id="summary"></div>
+      </header>
+
+      <section class="toolbar" aria-label="Framework filters">
+        <label>
+          <span>Search</span>
+          <input id="search-input" type="search" placeholder="roof, loss runs, MFA..." />
+        </label>
+
+        <label>
+          <span>Pillar</span>
+          <select id="pillar-filter"></select>
+        </label>
+      </section>
+
+      <section class="grade-strip" id="grade-strip" aria-label="Grade bands"></section>
+
+      <section class="table-section">
+        <div class="section-title">
+          <h2>Scored Factors</h2>
+          <span id="factor-count"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Pillar</th>
+                <th>Factor</th>
+                <th>Max</th>
+                <th>Score Rules</th>
+                <th>Evidence</th>
+              </tr>
+            </thead>
+            <tbody id="factor-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-section">
+        <div class="section-title">
+          <h2>Bonus Paths</h2>
+          <span id="bonus-count"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Pillar</th>
+                <th>Bonus</th>
+                <th>Points</th>
+                <th>What Counts</th>
+              </tr>
+            </thead>
+            <tbody id="bonus-table"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
