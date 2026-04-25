@@ -33,6 +33,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
   const sessionIdRef = useRef(0)
   const [transcript, setTranscript] = useState(initialTranscript)
   const [isListening, setIsListening] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [statusMessage, setStatusMessage] = useState('Ready to capture with Deepgram.')
@@ -218,11 +219,20 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
     setTranscript(value)
   }
 
-  function handleContinue() {
+  async function handleContinue() {
     if (isListening) {
       stopListening()
     }
-    onContinue(transcript.trim())
+
+    setIsSubmitting(true)
+
+    try {
+      await onContinue(transcript.trim())
+    } catch (error) {
+      setErrorMessage(error?.message || 'We could not prefill the business information.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -246,11 +256,12 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
             <button
               type="button"
               onClick={isListening ? handleStopListening : handleStartListening}
+              disabled={isSubmitting}
               className={`relative flex h-36 w-36 items-center justify-center rounded-full border transition-all ${
                 isListening
                   ? 'border-red-300 bg-red-500 shadow-[0_0_0_14px_rgba(239,68,68,0.12)]'
                   : 'border-gray-200 bg-gray-950 shadow-[0_20px_40px_rgba(17,24,39,0.18)] hover:scale-[1.02]'
-              }`}
+              } disabled:cursor-not-allowed disabled:opacity-50`}
               aria-label={isListening ? 'Stop listening' : 'Start talking'}
             >
               <span className={`text-5xl ${isListening ? 'animate-pulse' : ''}`}>🎤</span>
@@ -284,10 +295,10 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
         <button
           type="button"
           onClick={handleContinue}
-          disabled={!transcript.trim()}
+          disabled={!transcript.trim() || isSubmitting}
           className="w-full rounded-2xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
         >
-          Done and prefill business info
+          {isSubmitting ? 'Prefilling business info...' : 'Done and prefill business info'}
         </button>
       </div>
     </div>
