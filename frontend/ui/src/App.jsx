@@ -1,67 +1,49 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ProgressStepper from './components/ProgressStepper'
 import GuidedCaptureScreen from './components/GuidedCaptureScreen'
+import PageStartAssessments from './pages/PageStart_Assessments'
+import Page0VoiceBusinessIntake from './pages/Page0_VoiceBusinessIntake'
 import Page1BusinessInfo from './pages/Page1_BusinessInfo'
 import Page2Exterior from './pages/Page2_Exterior'
 import Page3Interior from './pages/Page3_Interior'
 import Page4Summary from './pages/Page4_Summary'
+import PageSubmissionSuccess from './pages/PageSubmissionSuccess'
+import { buildVoiceBusinessPrefill } from './utils/voiceBusinessPrefill'
 
 const HOME_ROUTE = '/'
 const EXTERIOR_RECORD_ROUTE = '/exterior/record'
+const SCREENS = {
+  start: 'start',
+  voiceIntake: 'voice-intake',
+  businessInfo: 'business-info',
+  exterior: 'exterior',
+  interior: 'interior',
+  summary: 'summary',
+  success: 'success',
+}
+
+const STEP_TO_SCREEN = {
+  1: SCREENS.businessInfo,
+  2: SCREENS.exterior,
+  3: SCREENS.interior,
+  4: SCREENS.summary,
+}
+
+const SCREEN_TO_STEP = {
+  [SCREENS.businessInfo]: 1,
+  [SCREENS.exterior]: 2,
+  [SCREENS.interior]: 3,
+  [SCREENS.summary]: 4,
+}
+
+const ASSESSMENT_TO_SCREEN = {
+  business: SCREENS.voiceIntake,
+  exterior: SCREENS.exterior,
+  interior: SCREENS.interior,
+}
 
 function getCurrentPath() {
   return window.location.pathname || HOME_ROUTE
-}
-
-function SubmissionSuccess({ data }) {
-  const fireSafetyChecked = Object.values(data.fireSafetyChecked || {}).filter(Boolean).length
-  const buildingChecked = Object.values(data.buildingChecked || {}).filter(Boolean).length
-  const exteriorChecked = Object.values(data.exteriorChecked || {}).filter(Boolean).length
-  const locationChecked = Object.values(data.locationChecked || {}).filter(Boolean).length
-  const totalChecked = fireSafetyChecked + buildingChecked + exteriorChecked + locationChecked
-  const totalItems = 10 + 10 + 7 + 6
-  const score = Math.round((totalChecked / totalItems) * 100)
-
-  return (
-    <div className="text-center py-12">
-      <div className="text-6xl mb-4">🎉</div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Assessment submitted!</h2>
-      <p className="text-gray-500 mb-8 text-sm max-w-md mx-auto">
-        Your insurance assessment for <strong>{data.businessName}</strong> has been submitted. An underwriter will review your information within 2 business days.
-      </p>
-
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 max-w-sm mx-auto mb-6">
-        <p className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Readiness score</p>
-        <div className="flex items-end justify-center gap-1 mb-2">
-          <span className="text-5xl font-bold text-gray-900">{score}</span>
-          <span className="text-2xl font-semibold text-gray-400 mb-1">/100</span>
-        </div>
-        <div className="w-full bg-gray-100 rounded-full h-2 mb-3">
-          <div
-            className={`h-2 rounded-full transition-all ${score >= 70 ? 'bg-green-500' : score >= 40 ? 'bg-orange-400' : 'bg-red-400'}`}
-            style={{ width: `${score}%` }}
-          />
-        </div>
-        <p className="text-xs text-gray-500">
-          {totalChecked} of {totalItems} checklist items confirmed
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto text-left">
-        {[
-          { label: 'Fire safety', checked: fireSafetyChecked, total: 10 },
-          { label: 'Building & structure', checked: buildingChecked, total: 10 },
-          { label: 'Exterior security', checked: exteriorChecked, total: 7 },
-          { label: 'Location & neighborhood', checked: locationChecked, total: 6 },
-        ].map(({ label, checked, total }) => (
-          <div key={label} className="bg-white rounded-xl border border-gray-200 p-3">
-            <p className="text-xs text-gray-500 mb-1">{label}</p>
-            <p className="font-semibold text-gray-800">{checked}<span className="text-gray-400 font-normal">/{total}</span></p>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
 }
 
 function computeCompletion(formData) {
@@ -70,15 +52,18 @@ function computeCompletion(formData) {
     2: !!formData.exteriorVideo,
     3: !!formData.interiorVideo,
     4: false,
+    business: !!(formData.ownerName && formData.businessName && formData.address && formData.businessDescription),
+    exterior: !!formData.exteriorVideo,
+    interior: !!formData.interiorVideo,
   }
 }
 
 export default function App() {
-  const [step, setStep] = useState(1)
-  const [submitted, setSubmitted] = useState(false)
+  const [currentScreen, setCurrentScreen] = useState(SCREENS.start)
   const [formData, setFormData] = useState({})
   const [pathname, setPathname] = useState(getCurrentPath)
   const [pendingExteriorRecording, setPendingExteriorRecording] = useState(null)
+  const contentRef = useRef(null)
 
   useEffect(() => {
     function handlePopState() {
@@ -89,15 +74,37 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, behavior: 'auto' })
+  }, [currentScreen, pathname])
+
   function navigate(path) {
     if (path === pathname) return
     window.history.pushState({}, '', path)
     setPathname(path)
   }
 
+  function goToScreen(screen) {
+    setCurrentScreen(screen)
+  }
+
   function handleSubmit() {
     console.log('Assessment data:', formData)
-    setSubmitted(true)
+    goToScreen(SCREENS.success)
+  }
+
+  function handleStartAssessment(assessmentKey) {
+    goToScreen(ASSESSMENT_TO_SCREEN[assessmentKey] || SCREENS.start)
+  }
+
+  function handleVoiceIntakeContinue(transcript) {
+    const prefilledData = buildVoiceBusinessPrefill(transcript)
+
+    setFormData((currentData) => ({
+      ...currentData,
+      ...prefilledData,
+    }))
+    goToScreen(SCREENS.businessInfo)
   }
 
   function handleFinishExteriorRecording() {
@@ -108,52 +115,74 @@ export default function App() {
     )
 
     setPendingExteriorRecording(mockRecording)
-    setStep(2)
+    goToScreen(SCREENS.exterior)
     navigate(HOME_ROUTE)
   }
 
   const completion = computeCompletion(formData)
+  const currentStep = SCREEN_TO_STEP[currentScreen] || null
   const isExteriorRecordRoute = pathname === EXTERIOR_RECORD_ROUTE
+
+  const screenContent = {
+    [SCREENS.start]: (
+      <PageStartAssessments
+        completion={completion}
+        onStartAssessment={handleStartAssessment}
+      />
+    ),
+    [SCREENS.voiceIntake]: (
+      <Page0VoiceBusinessIntake
+        initialTranscript={formData.voiceIntakeTranscript || ''}
+        onContinue={handleVoiceIntakeContinue}
+      />
+    ),
+    [SCREENS.businessInfo]: (
+      <Page1BusinessInfo
+        data={formData}
+        onChange={setFormData}
+        onNext={() => goToScreen(SCREENS.exterior)}
+      />
+    ),
+    [SCREENS.exterior]: (
+      <Page2Exterior
+        data={formData}
+        onChange={setFormData}
+        onNext={() => goToScreen(SCREENS.interior)}
+        onBack={() => goToScreen(SCREENS.businessInfo)}
+        onRecordNow={() => {
+          goToScreen(SCREENS.exterior)
+          navigate(EXTERIOR_RECORD_ROUTE)
+        }}
+        pendingRecordedFile={pendingExteriorRecording}
+        onPendingRecordedFileHandled={() => setPendingExteriorRecording(null)}
+      />
+    ),
+    [SCREENS.interior]: (
+      <Page3Interior
+        data={formData}
+        onChange={setFormData}
+        onNext={() => goToScreen(SCREENS.summary)}
+        onBack={() => goToScreen(SCREENS.exterior)}
+      />
+    ),
+    [SCREENS.summary]: (
+      <Page4Summary
+        data={formData}
+        onChange={setFormData}
+        onBack={() => goToScreen(SCREENS.interior)}
+        onSubmit={handleSubmit}
+      />
+    ),
+    [SCREENS.success]: <PageSubmissionSuccess data={formData} />,
+  }
+
   const pageContent = isExteriorRecordRoute ? (
     <GuidedCaptureScreen
       onBack={() => navigate(HOME_ROUTE)}
       onFinish={handleFinishExteriorRecording}
     />
-  ) : submitted ? (
-    <SubmissionSuccess data={formData} />
-  ) : step === 1 ? (
-    <Page1BusinessInfo
-      data={formData}
-      onChange={setFormData}
-      onNext={() => setStep(2)}
-    />
-  ) : step === 2 ? (
-    <Page2Exterior
-      data={formData}
-      onChange={setFormData}
-      onNext={() => setStep(3)}
-      onBack={() => setStep(1)}
-      onRecordNow={() => {
-        setStep(2)
-        navigate(EXTERIOR_RECORD_ROUTE)
-      }}
-      pendingRecordedFile={pendingExteriorRecording}
-      onPendingRecordedFileHandled={() => setPendingExteriorRecording(null)}
-    />
-  ) : step === 3 ? (
-    <Page3Interior
-      data={formData}
-      onChange={setFormData}
-      onNext={() => setStep(4)}
-      onBack={() => setStep(2)}
-    />
   ) : (
-    <Page4Summary
-      data={formData}
-      onChange={setFormData}
-      onBack={() => setStep(3)}
-      onSubmit={handleSubmit}
-    />
+    screenContent[currentScreen]
   )
 
   return (
@@ -178,7 +207,10 @@ export default function App() {
               </div>
             </div>
 
-            <div className={`phone-content ${isExteriorRecordRoute ? 'phone-content-fullscreen' : ''}`}>
+            <div
+              ref={contentRef}
+              className={`phone-content ${isExteriorRecordRoute ? 'phone-content-fullscreen' : ''}`}
+            >
               {isExteriorRecordRoute ? (
                 pageContent
               ) : (
@@ -194,13 +226,16 @@ export default function App() {
                     </p>
                   </div>
 
-                  {!submitted && (
+                  {currentStep ? (
                     <ProgressStepper
-                      currentStep={step}
+                      currentStep={currentStep}
                       completion={completion}
-                      onStepClick={setStep}
+                      onStepClick={(stepNumber) => {
+                        const nextScreen = STEP_TO_SCREEN[stepNumber]
+                        if (nextScreen) goToScreen(nextScreen)
+                      }}
                     />
-                  )}
+                  ) : null}
 
                   <div className="bg-transparent">
                     {pageContent}
