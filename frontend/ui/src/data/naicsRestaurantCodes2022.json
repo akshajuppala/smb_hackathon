@@ -1,0 +1,133 @@
+{
+  "source": {
+    "publisher": "U.S. Census Bureau",
+    "dataset": "2022 NAICS Structure",
+    "url": "https://www.census.gov/naics/2022NAICS/2022_NAICS_Structure.xlsx",
+    "downloadedAt": "2026-04-25"
+  },
+  "branch": {
+    "code": "722",
+    "title": "Food Services and Drinking Places"
+  },
+  "codes": [
+    {
+      "code": "722",
+      "title": "Food Services and Drinking Places",
+      "level": 3,
+      "parentCode": null,
+      "isLeaf": false
+    },
+    {
+      "code": "7223",
+      "title": "Special Food Services",
+      "level": 4,
+      "parentCode": "722",
+      "isLeaf": false
+    },
+    {
+      "code": "72231",
+      "title": "Food Service Contractors",
+      "level": 5,
+      "parentCode": "7223",
+      "isLeaf": false
+    },
+    {
+      "code": "722310",
+      "title": "Food Service Contractors",
+      "level": 6,
+      "parentCode": "72231",
+      "isLeaf": true
+    },
+    {
+      "code": "72232",
+      "title": "Caterers",
+      "level": 5,
+      "parentCode": "7223",
+      "isLeaf": false
+    },
+    {
+      "code": "722320",
+      "title": "Caterers",
+      "level": 6,
+      "parentCode": "72232",
+      "isLeaf": true
+    },
+    {
+      "code": "72233",
+      "title": "Mobile Food Services",
+      "level": 5,
+      "parentCode": "7223",
+      "isLeaf": false
+    },
+    {
+      "code": "722330",
+      "title": "Mobile Food Services",
+      "level": 6,
+      "parentCode": "72233",
+      "isLeaf": true
+    },
+    {
+      "code": "7224",
+      "title": "Drinking Places (Alcoholic Beverages)",
+      "level": 4,
+      "parentCode": "722",
+      "isLeaf": false
+    },
+    {
+      "code": "72241",
+      "title": "Drinking Places (Alcoholic Beverages)",
+      "level": 5,
+      "parentCode": "7224",
+      "isLeaf": false
+    },
+    {
+      "code": "722410",
+      "title": "Drinking Places (Alcoholic Beverages)",
+      "level": 6,
+      "parentCode": "72241",
+      "isLeaf": true
+    },
+    {
+      "code": "7225",
+      "title": "Restaurants and Other Eating Places",
+      "level": 4,
+      "parentCode": "722",
+      "isLeaf": false
+    },
+    {
+      "code": "72251",
+      "title": "Restaurants and Other Eating Places",
+      "level": 5,
+      "parentCode": "7225",
+      "isLeaf": false
+    },
+    {
+      "code": "722511",
+      "title": "Full-Service Restaurants",
+      "level": 6,
+      "parentCode": "72251",
+      "isLeaf": true
+    },
+    {
+      "code": "722513",
+      "title": "Limited-Service Restaurants",
+      "level": 6,
+      "parentCode": "72251",
+      "isLeaf": true
+    },
+    {
+      "code": "722514",
+      "title": "Cafeterias, Grill Buffets, and Buffets",
+      "level": 6,
+      "parentCode": "72251",
+      "isLeaf": true
+    },
+    {
+      "code": "722515",
+      "title": "Snack and Nonalcoholic Beverage Bars",
+      "level": 6,
+      "parentCode": "72251",
+      "isLeaf": true
+    }
+  ]
+}
