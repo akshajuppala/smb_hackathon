@@ -11,6 +11,8 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
   const [riskResult, setRiskResult] = useState(null)
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [reviewsResult, setReviewsResult] = useState(null)
+  const [websiteLoading, setWebsiteLoading] = useState(false)
+  const [websiteError, setWebsiteError] = useState('')
 
   useEffect(() => {
     if (data.address?.length > 10) {
@@ -20,6 +22,56 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
       setRiskResult(null)
     }
   }, [data.address])
+
+  useEffect(() => {
+    const businessName = data.businessName?.trim()
+    const address = data.address?.trim()
+
+    if (!businessName || businessName.length < 2 || !address || address.length < 10) {
+      setWebsiteLoading(false)
+      setWebsiteError('')
+      return
+    }
+
+    const lookupQuery = `${businessName}::${address}`
+    if (data.websiteLookupQuery === lookupQuery) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(async () => {
+      setWebsiteLoading(true)
+      setWebsiteError('')
+
+      try {
+        const params = new URLSearchParams({
+          businessName,
+          address,
+        })
+        console.log('[website-lookup] Requesting website', { businessName, address })
+        const response = await fetch(`/api/place-website?${params.toString()}`)
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(result.details || result.error || 'Lookup failed')
+        }
+
+        console.log('[website-lookup] Response', result)
+        onChange({
+          ...data,
+          websiteUrl: result.websiteUrl || data.websiteUrl || '',
+          googlePlaceUrl: result.googlePlaceUrl || data.googlePlaceUrl || '',
+          websiteLookupQuery: lookupQuery,
+        })
+      } catch (error) {
+        console.error('[website-lookup] Failed', error)
+        setWebsiteError(error.message || 'Could not find a website yet.')
+      } finally {
+        setWebsiteLoading(false)
+      }
+    }, 800)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [data.address, data.businessName])
 
   function handleChange(field, value) {
     onChange({ ...data, [field]: value })
@@ -151,6 +203,27 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
               onChange={(e) => handleChange('businessDescription', e.target.value)}
               className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none"
             />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Website</label>
+            <input
+              type="url"
+              placeholder="https://www.yourrestaurant.com"
+              value={data.websiteUrl || ''}
+              onChange={(e) => handleChange('websiteUrl', e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+            />
+            <div className="mt-1 min-h-5 text-xs">
+              {websiteLoading ? (
+                <span className="text-blue-600">Looking up website from business name and address...</span>
+              ) : websiteError ? (
+                <span className="text-orange-600">{websiteError}</span>
+              ) : data.websiteUrl ? (
+                <span className="text-green-600">Website found automatically.</span>
+              ) : (
+                <span className="text-gray-500">We will try to auto-fill this after you enter the business name and address.</span>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
