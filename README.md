@@ -20,3 +20,9 @@ npm run dev
 ```
 
 Then open `http://127.0.0.1:4173`.
+
+If PDF export needs a local browser binary:
+
+```bash
+npm run install:pdf-browser
+```

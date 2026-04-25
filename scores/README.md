@@ -25,6 +25,12 @@ If that port is already in use:
 PORT=4174 npm run dev
 ```
 
+PDF export uses Chrome or Playwright Chromium. If neither is available:
+
+```bash
+npm run install:pdf-browser
+```
+
 ## Notes
 
 - The browser UI fetches `/api/framework`.

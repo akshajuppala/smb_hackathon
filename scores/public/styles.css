@@ -94,7 +94,8 @@ h2 {
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) 260px;
+  grid-template-columns: minmax(240px, 1fr) 260px auto;
+  align-items: end;
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--line);
@@ -129,6 +130,27 @@ input:focus,
 select:focus {
   outline: 2px solid rgba(15, 118, 110, 0.25);
   border-color: var(--teal);
+}
+
+.download-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #0f766e;
+  border-radius: 6px;
+  background: #0f766e;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.download-button:focus-visible,
+.download-button:hover {
+  background: #0b5f58;
+  outline: 2px solid rgba(15, 118, 110, 0.25);
 }
 
 .grade-strip {
@@ -388,4 +410,9 @@ pre {
   .grade-strip {
     grid-template-columns: 1fr;
   }
+}
+
+@page {
+  size: A4 portrait;
+  margin: 10mm;
 }

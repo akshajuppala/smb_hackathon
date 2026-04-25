@@ -13,6 +13,7 @@ const elements = {
   factorTable: document.querySelector("#factor-table"),
   bonusCount: document.querySelector("#bonus-count"),
   bonusTable: document.querySelector("#bonus-table"),
+  downloadPdf: document.querySelector("#download-pdf"),
 };
 
 const evidenceGuidance = {
@@ -103,19 +104,25 @@ async function init() {
 
   const payload = await response.json();
   state.framework = payload.framework;
+  hydrateStateFromUrl();
 
   elements.searchInput.addEventListener("input", (event) => {
     state.searchTerm = event.target.value.trim().toLowerCase();
     renderTables();
+    updatePdfHref();
   });
 
   elements.pillarFilter.addEventListener("change", (event) => {
     state.pillarId = event.target.value;
     renderTables();
+    updatePdfHref();
   });
 
   renderStaticSections();
+  syncControls();
+  updatePdfHref();
   renderTables();
+  document.body.dataset.ready = "true";
 }
 
 function renderStaticSections() {
@@ -149,6 +156,39 @@ function renderStaticSections() {
       `,
     )
     .join("");
+}
+
+function hydrateStateFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const searchTerm = params.get("search")?.trim().toLowerCase();
+  const pillarId = params.get("pillar");
+
+  if (searchTerm) {
+    state.searchTerm = searchTerm;
+  }
+
+  if (pillarId && pillarId !== "all") {
+    state.pillarId = pillarId;
+  }
+}
+
+function syncControls() {
+  elements.searchInput.value = state.searchTerm;
+  elements.pillarFilter.value = state.pillarId;
+}
+
+function updatePdfHref() {
+  const url = new URL("/api/pdf", window.location.origin);
+
+  if (state.searchTerm) {
+    url.searchParams.set("search", state.searchTerm);
+  }
+
+  if (state.pillarId !== "all") {
+    url.searchParams.set("pillar", state.pillarId);
+  }
+
+  elements.downloadPdf.href = url.toString();
 }
 
 function renderTables() {
