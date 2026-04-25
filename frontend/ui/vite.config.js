@@ -102,6 +102,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
+    envPrefix: ['VITE_', 'DEEPGRAM_'],
     plugins: [react(), googlePlacesWebsitePlugin(env)],
   }
 })
