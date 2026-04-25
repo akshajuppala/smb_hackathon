@@ -20,20 +20,19 @@ export default function ChecklistSection({
   const checkedCount = items.filter(i => checked[i.id]).length
 
   return (
-    <div className={`rounded-2xl border ${style.border} ${style.bg} overflow-hidden mb-6`}>
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-white/60">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">{icon}</span>
-          <h3 className="font-semibold text-gray-900 text-lg">{title}</h3>
+    <div className={`rounded-2xl border ${style.border} ${style.bg} overflow-hidden mb-5 sm:mb-6`}>
+      <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200 bg-white/60">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <span className="text-xl sm:text-2xl flex-shrink-0">{icon}</span>
+          <h3 className="font-semibold text-gray-900 text-base sm:text-lg truncate">{title}</h3>
         </div>
-        <div className="flex items-center gap-3">
-          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${style.badge}`}>
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <span className={`hidden sm:inline px-2.5 py-0.5 rounded-full text-xs font-medium ${style.badge}`}>
             {style.label}
           </span>
-          <span className="text-sm text-gray-500 font-medium">
+          <span className="text-xs sm:text-sm text-gray-500 font-medium whitespace-nowrap">
             {checkedCount}/{items.length}
           </span>
-          <span className="text-gray-400">▲</span>
         </div>
       </div>
 
@@ -41,7 +40,7 @@ export default function ChecklistSection({
         {items.map((item) => (
           <label
             key={item.id}
-            className="flex items-start gap-4 px-5 py-4 cursor-pointer hover:bg-white/60 transition-colors"
+            className="flex items-start gap-3 sm:gap-4 px-4 sm:px-5 py-3 sm:py-4 cursor-pointer hover:bg-white/60 transition-colors"
           >
             <input
               type="checkbox"
@@ -55,12 +54,14 @@ export default function ChecklistSection({
                 <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
               )}
             </div>
-            <RiskBadge level={item.priority} />
+            <div className="flex-shrink-0">
+              <RiskBadge level={item.priority} />
+            </div>
           </label>
         ))}
 
         {children && (
-          <div className="px-5 py-4 bg-white/60">
+          <div className="px-4 sm:px-5 py-4 bg-white/60">
             {children}
           </div>
         )}

@@ -56,8 +56,6 @@ export default function Page2Exterior({ data, onChange, onNext, onBack }) {
     })
   }
 
-  const canProceed = !!data.exteriorVideo
-
   return (
     <div>
       <div className="mb-8">
@@ -67,7 +65,7 @@ export default function Page2Exterior({ data, onChange, onNext, onBack }) {
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-6">
         <VideoUpload
           label="Exterior video walkthrough"
           hint="Walk around your building: entrance, windows, shutters, lighting, parking area, and signage. Aim for 2–5 minutes."
@@ -130,19 +128,18 @@ export default function Page2Exterior({ data, onChange, onNext, onBack }) {
         </div>
       </ChecklistSection>
 
-      <div className="flex justify-between">
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
         <button
           onClick={onBack}
-          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+          className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-50 transition-colors"
         >
           ← Back
         </button>
         <button
           onClick={onNext}
-          disabled={!canProceed}
-          className="px-8 py-3 bg-gray-900 text-white rounded-xl font-semibold hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-900 text-white text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-700 transition-colors"
         >
-          Continue to Interior Assessment →
+          Continue to Interior →
         </button>
       </div>
     </div>

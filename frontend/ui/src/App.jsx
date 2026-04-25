@@ -3,6 +3,7 @@ import ProgressStepper from './components/ProgressStepper'
 import Page1BusinessInfo from './pages/Page1_BusinessInfo'
 import Page2Exterior from './pages/Page2_Exterior'
 import Page3Interior from './pages/Page3_Interior'
+import Page4Summary from './pages/Page4_Summary'
 
 function SubmissionSuccess({ data }) {
   const fireSafetyChecked = Object.values(data.fireSafetyChecked || {}).filter(Boolean).length
@@ -55,6 +56,15 @@ function SubmissionSuccess({ data }) {
   )
 }
 
+function computeCompletion(formData) {
+  return {
+    1: !!(formData.ownerName && formData.businessName && formData.address && formData.businessDescription),
+    2: !!formData.exteriorVideo,
+    3: !!formData.interiorVideo,
+    4: false,
+  }
+}
+
 export default function App() {
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
@@ -65,22 +75,30 @@ export default function App() {
     setSubmitted(true)
   }
 
+  const completion = computeCompletion(formData)
+
   return (
-    <div className="min-h-screen bg-[#faf9f7] py-10 px-4">
+    <div className="min-h-screen bg-[#faf9f7] py-6 sm:py-10 px-3 sm:px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-1.5 mb-4">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-3 sm:px-4 py-1.5 mb-3 sm:mb-4">
             <span className="text-sm">🏢</span>
-            <span className="text-xs font-medium text-gray-600">SMB Restaurant Insurance Assessment</span>
+            <span className="text-[11px] sm:text-xs font-medium text-gray-600">SMB Restaurant Insurance Assessment</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Insurance Readiness Check</h1>
-          <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Insurance Readiness Check</h1>
+          <p className="text-gray-500 text-xs sm:text-sm mt-2 max-w-md mx-auto px-2">
             Complete this assessment to give your insurer everything they need for an accurate quote.
           </p>
         </div>
 
-        {!submitted && <ProgressStepper currentStep={step} />}
+        {!submitted && (
+          <ProgressStepper
+            currentStep={step}
+            completion={completion}
+            onStepClick={setStep}
+          />
+        )}
 
         <div className="bg-transparent">
           {submitted ? (
@@ -98,11 +116,18 @@ export default function App() {
               onNext={() => setStep(3)}
               onBack={() => setStep(1)}
             />
-          ) : (
+          ) : step === 3 ? (
             <Page3Interior
               data={formData}
               onChange={setFormData}
+              onNext={() => setStep(4)}
               onBack={() => setStep(2)}
+            />
+          ) : (
+            <Page4Summary
+              data={formData}
+              onChange={setFormData}
+              onBack={() => setStep(3)}
               onSubmit={handleSubmit}
             />
           )}

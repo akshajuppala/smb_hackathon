@@ -13,7 +13,7 @@ const MOCK_CV_INTERIOR = [
   { id: 'structural_damage', label: 'No visible water stains, mold, or damage', detected: true },
 ]
 
-export default function Page3Interior({ data, onChange, onBack, onSubmit }) {
+export default function Page3Interior({ data, onChange, onBack, onNext }) {
   const [analyzing, setAnalyzing] = useState(false)
   const [cvResults, setCvResults] = useState(null)
 
@@ -45,8 +45,6 @@ export default function Page3Interior({ data, onChange, onBack, onSubmit }) {
     onChange({ ...data, buildingChecked: { ...(data.buildingChecked || {}), [id]: !data.buildingChecked?.[id] } })
   }
 
-  const canSubmit = !!data.interiorVideo
-
   return (
     <div>
       <div className="mb-8">
@@ -57,7 +55,7 @@ export default function Page3Interior({ data, onChange, onBack, onSubmit }) {
       </div>
 
       {/* Video Upload */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-6">
         <VideoUpload
           label="Interior video walkthrough"
           hint="Film the ceiling (sprinklers), kitchen hood system, fire extinguishers with visible tags, electrical panel, and all exits. Aim for 3–7 minutes."
@@ -68,7 +66,7 @@ export default function Page3Interior({ data, onChange, onBack, onSubmit }) {
       </div>
 
       {/* Sprinkler Section */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">💧</span>
           <h3 className="font-semibold text-gray-800">Sprinkler system details</h3>
@@ -102,7 +100,7 @@ export default function Page3Interior({ data, onChange, onBack, onSubmit }) {
       </div>
 
       {/* Kitchen & Fire Suppression */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">🍳</span>
           <h3 className="font-semibold text-gray-800">Kitchen & fire suppression</h3>
@@ -135,7 +133,7 @@ export default function Page3Interior({ data, onChange, onBack, onSubmit }) {
       </div>
 
       {/* Electrical, Plumbing, HVAC */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">⚡</span>
           <h3 className="font-semibold text-gray-800">Electrical, plumbing & HVAC</h3>
@@ -249,19 +247,18 @@ export default function Page3Interior({ data, onChange, onBack, onSubmit }) {
         </div>
       </ChecklistSection>
 
-      <div className="flex justify-between">
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
         <button
           onClick={onBack}
-          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+          className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-50 transition-colors"
         >
           ← Back
         </button>
         <button
-          onClick={onSubmit}
-          disabled={!canSubmit}
-          className="px-8 py-3 bg-gray-900 text-white rounded-xl font-semibold hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          onClick={onNext}
+          className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-900 text-white text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-700 transition-colors"
         >
-          Submit Assessment ✓
+          Continue to Summary →
         </button>
       </div>
     </div>

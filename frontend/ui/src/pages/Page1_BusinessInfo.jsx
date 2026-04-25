@@ -44,8 +44,6 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
     }, 2200)
   }
 
-  const canProceed = data.ownerName && data.businessName && data.address && data.businessDescription
-
   return (
     <div>
       <div className="mb-8">
@@ -54,7 +52,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
       </div>
 
       {/* Field 1: About yourself */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-5">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-5">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">👤</span>
           <h3 className="font-semibold text-gray-800">Tell us about yourself</h3>
@@ -104,7 +102,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
       </div>
 
       {/* Field 2: What is your business doing */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-5">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-5">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">🍽️</span>
           <h3 className="font-semibold text-gray-800">What is your business doing?</h3>
@@ -162,7 +160,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
       </div>
 
       {/* Field 3: Location */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-5">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-5">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">📍</span>
           <h3 className="font-semibold text-gray-800">Where is your restaurant located?</h3>
@@ -235,20 +233,20 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
       </div>
 
       {/* Google Reviews Scraper */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-8">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xl">⭐</span>
           <h3 className="font-semibold text-gray-800">Google Reviews — Slip & Fall Liability Check</h3>
         </div>
         <p className="text-xs text-gray-500 mb-4">We scan your public Google Reviews for mentions of slips, falls, wet floors, or unsafe conditions that could affect your liability exposure.</p>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <input
             type="text"
             placeholder="Google Maps URL or business name + city"
             value={data.googlePlaceUrl || ''}
             onChange={(e) => handleChange('googlePlaceUrl', e.target.value)}
-            className="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+            className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
           />
           <button
             onClick={simulateReviewScrape}
@@ -313,10 +311,9 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
       <div className="flex justify-end">
         <button
           onClick={onNext}
-          disabled={!canProceed}
-          className="px-8 py-3 bg-gray-900 text-white rounded-xl font-semibold hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-900 text-white text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-700 transition-colors"
         >
-          Continue to Exterior Assessment →
+          Continue to Exterior →
         </button>
       </div>
     </div>
