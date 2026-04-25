@@ -9,6 +9,10 @@ import Page4Summary from './pages/Page4_Summary'
 const HOME_ROUTE = '/'
 const EXTERIOR_RECORD_ROUTE = '/exterior/record'
 const INTERIOR_RECORD_ROUTE = '/interior/record'
+const EXTERIOR_RECORDING_ASSET = '/media/restaurant-exterior-recording.mp4'
+const INTERIOR_RECORDING_ASSET = '/media/restaurant-interior-recording.mp4'
+const EXTERIOR_RECORDING_FILE_NAME = 'restaurant-exterior-recording.mp4'
+const INTERIOR_RECORDING_FILE_NAME = 'restaurant-interior-recording.mp4'
 
 function getCurrentPath() {
   return window.location.pathname || HOME_ROUTE
@@ -117,7 +121,7 @@ export default function App() {
   function handleFinishExteriorRecording() {
     const mockRecording = new File(
       ['demo exterior walkthrough'],
-      'exterior-walkthrough-demo.mp4',
+      EXTERIOR_RECORDING_FILE_NAME,
       { type: 'video/mp4' }
     )
 
@@ -130,7 +134,7 @@ export default function App() {
   function handleFinishInteriorRecording() {
     const mockRecording = new File(
       ['demo interior walkthrough'],
-      'interior-walkthrough-demo.mp4',
+      INTERIOR_RECORDING_FILE_NAME,
       { type: 'video/mp4' }
     )
 
@@ -149,13 +153,14 @@ export default function App() {
       message="Start by showing the storefront, main entrance, windows, lighting, and parking area."
       onBack={() => navigate(HOME_ROUTE)}
       onFinish={handleFinishExteriorRecording}
-      videoSrc="/media/exterior-loop.mp4"
+      videoSrc={EXTERIOR_RECORDING_ASSET}
     />
   ) : isInteriorRecordRoute ? (
     <GuidedCaptureScreen
       message="Start with the ceiling and sprinklers, then capture the kitchen line, dining area, exits, and utility spaces."
       onBack={() => navigate(HOME_ROUTE)}
       onFinish={handleFinishInteriorRecording}
+      videoSrc={INTERIOR_RECORDING_ASSET}
     />
   ) : submitted ? (
     <SubmissionSuccess data={formData} />
