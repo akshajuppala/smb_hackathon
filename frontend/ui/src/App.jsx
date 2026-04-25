@@ -8,7 +8,7 @@ import Page2Exterior from './pages/Page2_Exterior'
 import Page3Interior from './pages/Page3_Interior'
 import Page4Summary from './pages/Page4_Summary'
 import PageSubmissionSuccess from './pages/PageSubmissionSuccess'
-import { buildVoiceBusinessPrefill } from './utils/voiceBusinessPrefill'
+import { resolveVoiceBusinessPrefill } from './utils/voiceBusinessPrefillService'
 
 const HOME_ROUTE = '/'
 const EXTERIOR_RECORD_ROUTE = '/exterior/record'
@@ -104,8 +104,8 @@ export default function App() {
     goToScreen(ASSESSMENT_TO_SCREEN[assessmentKey] || SCREENS.start)
   }
 
-  function handleVoiceIntakeContinue(transcript) {
-    const prefilledData = buildVoiceBusinessPrefill(transcript)
+  async function handleVoiceIntakeContinue(transcript) {
+    const prefilledData = await resolveVoiceBusinessPrefill(transcript)
 
     setFormData((currentData) => ({
       ...currentData,

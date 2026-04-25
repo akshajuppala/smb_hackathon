@@ -4,4 +4,9 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   envPrefix: ['VITE_', 'DEEPGRAM_'],
   plugins: [react()],
+  server: {
+    proxy: {
+      '/api': 'http://127.0.0.1:3000',
+    },
+  },
 })

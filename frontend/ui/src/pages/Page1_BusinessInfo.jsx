@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { assessNeighborhoodRisk } from '../data/neighborhoodRiskData'
+import { BUSINESS_INFO_FIELD_MAP, BUSINESS_INFO_SECTIONS } from '../data/businessInfoFields'
 
 const RISK_STYLES = {
   high: { bg: 'bg-red-50 border-red-300', icon: '⚠️', title: 'High-Risk Neighborhood Detected', text: 'text-red-700' },
@@ -44,6 +45,126 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
     }, 2200)
   }
 
+  function renderInput(field) {
+    const commonProps = {
+      value: data[field.key] || '',
+      placeholder: field.placeholder,
+      className:
+        'w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300',
+    }
+
+    if (field.input === 'textarea') {
+      return (
+        <textarea
+          rows={field.rows || 4}
+          {...commonProps}
+          onChange={(event) => handleChange(field.key, event.target.value)}
+          className={`${commonProps.className} resize-none`}
+        />
+      )
+    }
+
+    if (field.input === 'select') {
+      return (
+        <select
+          value={data[field.key] || ''}
+          onChange={(event) => handleChange(field.key, event.target.value)}
+          className={`${commonProps.className} bg-white`}
+        >
+          {field.options.map((option) => (
+            <option key={option.value || 'empty'} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      )
+    }
+
+    return (
+      <input
+        type={field.input}
+        {...commonProps}
+        onChange={(event) => handleChange(field.key, event.target.value)}
+      />
+    )
+  }
+
+  function renderStandardField(fieldKey) {
+    const field = BUSINESS_INFO_FIELD_MAP[fieldKey]
+
+    return (
+      <div key={field.key}>
+        <label className="block text-xs font-semibold text-gray-600 mb-1.5">{field.label}</label>
+        {renderInput(field)}
+      </div>
+    )
+  }
+
+  function renderSection(section) {
+    const standardFields = section.fieldKeys.map((fieldKey) => BUSINESS_INFO_FIELD_MAP[fieldKey]).filter(Boolean)
+    const checkboxFields = (section.checkboxKeys || []).map((fieldKey) => BUSINESS_INFO_FIELD_MAP[fieldKey]).filter(Boolean)
+    const locationTailFields = section.key === 'location' ? standardFields.slice(1) : []
+    const locationAddressField = section.key === 'location' ? standardFields[0] : null
+
+    return (
+      <div key={section.key} className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-5">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-xl">{section.icon}</span>
+          <h3 className="font-semibold text-gray-800">{section.title}</h3>
+        </div>
+
+        {section.key === 'aboutYou' && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{standardFields.map((field) => renderStandardField(field.key))}</div>}
+
+        {section.key === 'business' && (
+          <div className="space-y-4">
+            {standardFields.map((field) => renderStandardField(field.key))}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {checkboxFields.map((field) => (
+                <label key={field.key} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 accent-gray-800"
+                    checked={!!data[field.key]}
+                    onChange={(event) => handleChange(field.key, event.target.checked)}
+                  />
+                  {field.label}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {section.key === 'location' && (
+          <div className="space-y-4">
+            {locationAddressField && renderStandardField(locationAddressField.key)}
+
+            {riskResult && (
+              <div className={`border rounded-xl px-4 py-4 ${RISK_STYLES[riskResult.level].bg}`}>
+                <div className={`flex items-start gap-2 ${RISK_STYLES[riskResult.level].text}`}>
+                  <span className="text-lg">{RISK_STYLES[riskResult.level].icon}</span>
+                  <div>
+                    <p className="font-semibold text-sm">{RISK_STYLES[riskResult.level].title}</p>
+                    {riskResult.neighborhood ? (
+                      <p className="text-xs mt-1">
+                        Address matches <strong>{riskResult.neighborhood}</strong> in {riskResult.city}, {riskResult.state} — a known high-risk area for insurance purposes. Expect higher property and liability premiums. Document all security measures carefully.
+                      </p>
+                    ) : (
+                      <p className="text-xs mt-1">No high-risk neighborhood flags detected for this address. This does not replace a full ISO crime score lookup by your insurer.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {locationTailFields.map((field) => renderStandardField(field.key))}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div>
       <div className="mb-8">
@@ -65,188 +186,8 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
         </div>
       )}
 
-      {/* Field 1: About yourself */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-5">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xl">👤</span>
-          <h3 className="font-semibold text-gray-800">Tell us about yourself</h3>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Full name *</label>
-            <input
-              type="text"
-              placeholder="Jane Smith"
-              value={data.ownerName || ''}
-              onChange={(e) => handleChange('ownerName', e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Your role</label>
-            <input
-              type="text"
-              placeholder="Owner, Manager, CFO..."
-              value={data.ownerRole || ''}
-              onChange={(e) => handleChange('ownerRole', e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Email</label>
-            <input
-              type="email"
-              placeholder="jane@yourrestaurant.com"
-              value={data.email || ''}
-              onChange={(e) => handleChange('email', e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Phone number</label>
-            <input
-              type="tel"
-              placeholder="(415) 000-0000"
-              value={data.phone || ''}
-              onChange={(e) => handleChange('phone', e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-            />
-          </div>
-        </div>
-      </div>
+      {BUSINESS_INFO_SECTIONS.map(renderSection)}
 
-      {/* Field 2: What is your business doing */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-5">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xl">🍽️</span>
-          <h3 className="font-semibold text-gray-800">What is your business doing?</h3>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Restaurant / business name *</label>
-            <input
-              type="text"
-              placeholder="The Golden Fork"
-              value={data.businessName || ''}
-              onChange={(e) => handleChange('businessName', e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Type of cuisine / concept</label>
-            <input
-              type="text"
-              placeholder="e.g. Italian trattoria, fast casual burger, sushi bar..."
-              value={data.cuisineType || ''}
-              onChange={(e) => handleChange('cuisineType', e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Describe your business *</label>
-            <textarea
-              rows={4}
-              placeholder="Describe what your restaurant does, how many seats, whether you serve alcohol, do catering, have a food truck, etc."
-              value={data.businessDescription || ''}
-              onChange={(e) => handleChange('businessDescription', e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none"
-            />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { key: 'serveAlcohol', label: 'Serves alcohol' },
-              { key: 'hasCatering', label: 'Catering' },
-              { key: 'hasFoodTruck', label: 'Food truck' },
-              { key: 'hasDelivery', label: 'Delivery' },
-            ].map(({ key, label }) => (
-              <label key={key} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 accent-gray-800"
-                  checked={!!data[key]}
-                  onChange={(e) => handleChange(key, e.target.checked)}
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Field 3: Location */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-5">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xl">📍</span>
-          <h3 className="font-semibold text-gray-800">Where is your restaurant located?</h3>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Full street address *</label>
-            <input
-              type="text"
-              placeholder="123 Market St, San Francisco, CA 94102"
-              value={data.address || ''}
-              onChange={(e) => handleChange('address', e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-            />
-          </div>
-
-          {riskResult && (
-            <div className={`border rounded-xl px-4 py-4 ${RISK_STYLES[riskResult.level].bg}`}>
-              <div className={`flex items-start gap-2 ${RISK_STYLES[riskResult.level].text}`}>
-                <span className="text-lg">{RISK_STYLES[riskResult.level].icon}</span>
-                <div>
-                  <p className="font-semibold text-sm">{RISK_STYLES[riskResult.level].title}</p>
-                  {riskResult.neighborhood ? (
-                    <p className="text-xs mt-1">
-                      Address matches <strong>{riskResult.neighborhood}</strong> in {riskResult.city}, {riskResult.state} — a known high-risk area for insurance purposes. Expect higher property and liability premiums. Document all security measures carefully.
-                    </p>
-                  ) : (
-                    <p className="text-xs mt-1">No high-risk neighborhood flags detected for this address. This does not replace a full ISO crime score lookup by your insurer.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Year building was constructed</label>
-              <input
-                type="number"
-                placeholder="e.g. 1985"
-                value={data.buildingYear || ''}
-                onChange={(e) => handleChange('buildingYear', e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Square footage</label>
-              <input
-                type="number"
-                placeholder="e.g. 2400"
-                value={data.squareFootage || ''}
-                onChange={(e) => handleChange('squareFootage', e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Own or lease?</label>
-              <select
-                value={data.ownOrLease || ''}
-                onChange={(e) => handleChange('ownOrLease', e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white"
-              >
-                <option value="">Select...</option>
-                <option value="own">Own</option>
-                <option value="lease">Lease</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Google Reviews Scraper */}
       <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-8">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xl">⭐</span>
@@ -259,7 +200,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
             type="text"
             placeholder="Google Maps URL or business name + city"
             value={data.googlePlaceUrl || ''}
-            onChange={(e) => handleChange('googlePlaceUrl', e.target.value)}
+            onChange={(event) => handleChange('googlePlaceUrl', event.target.value)}
             className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
           />
           <button
@@ -307,8 +248,8 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
             {reviewsResult.excerpts.length > 0 && (
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-gray-600">Flagged review excerpts:</p>
-                {reviewsResult.excerpts.map((ex, i) => (
-                  <div key={i} className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-2.5">
+                {reviewsResult.excerpts.map((ex, index) => (
+                  <div key={index} className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-2.5">
                     <p className="text-sm text-gray-800 italic">{ex.text}</p>
                     <p className="text-xs text-gray-400 mt-1">{ex.date}</p>
                   </div>
