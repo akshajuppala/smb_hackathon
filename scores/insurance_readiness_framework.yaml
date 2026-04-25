@@ -1,0 +1,496 @@
+framework:
+  id: insurance_readiness_v1
+  name: Insurance Readiness Scoring Framework
+  version: 1.0.0
+  status: draft
+  source_of_truth: true
+  scoring_method:
+    core_max_points: 100
+    bonus_max_points: 10
+    grade_uses: core_score_only
+    default_rule: "If evidence is missing, expired, contradictory, or cannot be verified, assign the lowest matching score for that factor."
+    evidence_rule: "Use the most recent verifiable evidence available at the time of scoring."
+    distance_rule: "Distance-based factors use straight-line distance from the parcel centroid to the nearest qualifying feature."
+    claims_rule: "Claims and loss-run factors look back five completed policy years."
+  grade_bands:
+    - grade: A
+      min_core_score: 85
+      max_core_score: 100
+      readiness: Strong submission profile; eligible for preferred markets.
+    - grade: B
+      min_core_score: 70
+      max_core_score: 84
+      readiness: Standard market eligible; minor improvements suggested.
+    - grade: C
+      min_core_score: 55
+      max_core_score: 69
+      readiness: Likely E&S placement; clear improvement path identified.
+    - grade: D
+      min_core_score: 40
+      max_core_score: 54
+      readiness: Significant gaps; top remediation items should be addressed first.
+    - grade: F
+      min_core_score: 0
+      max_core_score: 39
+      readiness: Foundational gaps; not submission-ready for most standard markets.
+  pillars:
+    - id: property_physical_risk
+      name: Property & Physical Risk
+      max_points: 30
+      factors:
+        - id: construction_type
+          name: Building construction type
+          max_points: 5
+          data_sources:
+            - County assessor record
+            - Property card
+            - Third-party inspection report
+          scoring_rules:
+            - points: 5
+              when: Verified fire-resistive or non-combustible construction.
+            - points: 4
+              when: Verified masonry non-combustible construction.
+            - points: 3
+              when: Verified joisted masonry or mixed masonry and combustible construction.
+            - points: 1
+              when: Verified frame or other primarily combustible construction.
+            - points: 0
+              when: Construction type is unknown, unverified, or materially conflicts across sources.
+        - id: roof_age_and_condition
+          name: Roof age and condition
+          max_points: 4
+          data_sources:
+            - Assessor record
+            - Roof inspection report
+            - Roof replacement invoice
+          scoring_rules:
+            - points: 4
+              when: Roof is less than 10 years old and no active deficiencies are noted in a report dated within the last 24 months.
+            - points: 2
+              when: Roof is 10 to 20 years old, or newer than 10 years old without a recent condition report.
+            - points: 1
+              when: Roof is more than 20 years old but a report dated within the last 12 months states no active leak or failure condition.
+            - points: 0
+              when: Roof age is unknown, roof is more than 20 years old without a recent clean report, or any active leak or failure is documented.
+        - id: sprinkler_system
+          name: Sprinkler system
+          max_points: 5
+          data_sources:
+            - Fire protection inspection certificate
+            - Photo evidence
+            - Monitoring contract
+          scoring_rules:
+            - points: 5
+              when: Full-building sprinkler coverage is installed, operational, and backed by a current inspection certificate.
+            - points: 3
+              when: Partial sprinkler coverage is installed and operational, or full coverage exists without current inspection proof.
+            - points: 1
+              when: Sprinklers exist but status, coverage, or operability cannot be fully verified.
+            - points: 0
+              when: No sprinkler system is present.
+        - id: fire_alarm_system
+          name: Fire and smoke alarm system
+          max_points: 4
+          data_sources:
+            - Alarm monitoring contract
+            - Photo of control panel
+            - Fire alarm inspection certificate
+          scoring_rules:
+            - points: 4
+              when: Centrally monitored fire alarm system is installed and current monitoring evidence is provided.
+            - points: 2
+              when: Local audible alarm system is installed but not centrally monitored.
+            - points: 1
+              when: Alarm equipment is visible but monitoring or operability cannot be verified.
+            - points: 0
+              when: No fire or smoke alarm system is present.
+        - id: burglar_alarm_security
+          name: Burglar alarm and intrusion security
+          max_points: 3
+          data_sources:
+            - Alarm contract
+            - Photo evidence
+            - Security vendor invoice
+          scoring_rules:
+            - points: 3
+              when: Monitored intrusion alarm is active and evidence of monitoring is current.
+            - points: 1
+              when: Local alarm or unmonitored intrusion system is present.
+            - points: 0
+              when: No intrusion alarm exists, or evidence is insufficient to confirm any active system.
+        - id: fire_hydrant_distance
+          name: Distance to nearest fire hydrant
+          max_points: 3
+          data_sources:
+            - OpenStreetMap
+            - Municipal GIS
+          scoring_rules:
+            - points: 3
+              when: Nearest fire hydrant is less than 500 feet away.
+            - points: 2
+              when: Nearest fire hydrant is 500 to 1000 feet away.
+            - points: 0
+              when: Nearest fire hydrant is more than 1000 feet away, or no reliable hydrant location is available.
+        - id: fire_station_distance
+          name: Distance to nearest fire station
+          max_points: 3
+          data_sources:
+            - OpenStreetMap
+            - Municipal GIS
+            - ArcGIS public data
+          scoring_rules:
+            - points: 3
+              when: Nearest fire station is less than 1 mile away.
+            - points: 2
+              when: Nearest fire station is 1 to 3 miles away.
+            - points: 1
+              when: Nearest fire station is more than 3 miles away.
+            - points: 0
+              when: No reliable fire station location is available.
+        - id: catastrophe_zone
+          name: Flood and wildfire zone exposure
+          max_points: 3
+          data_sources:
+            - FEMA Flood Map Service Center
+            - State wildfire hazard maps
+            - Mitigation documentation
+          scoring_rules:
+            - points: 3
+              when: Property is outside both a FEMA special flood hazard area and a state-designated high or very-high wildfire hazard zone.
+            - points: 1
+              when: Property is inside at least one high-risk zone but all required mitigation for that zone is documented and current.
+            - points: 0
+              when: Property is inside a high-risk zone without documented mitigation, or zone status cannot be verified.
+      bonus_opportunities:
+        - id: recent_property_condition_survey
+          name: Recent third-party property condition survey
+          points: 2
+          actionable: true
+          what_counts: Third-party inspection or property condition survey dated within the last 6 months with no open critical deficiencies.
+    - id: operational_risk
+      name: Operational Risk
+      max_points: 25
+      factors:
+        - id: business_hazard_class
+          name: Business hazard class
+          max_points: 6
+          data_sources:
+            - User-provided NAICS code
+            - Secretary of State filing
+            - Carrier submission data
+          scoring_rules:
+            - points: 6
+              when: Verified low-hazard occupancy such as office, professional services, apparel retail, bookstore, or comparable operations with no hazardous processing.
+            - points: 4
+              when: Verified medium-hazard occupancy such as grocery, salon, fitness studio, cafe without deep frying, or comparable operations with limited hazard sources.
+            - points: 2
+              when: Verified high-hazard occupancy such as full-service restaurant, bar, auto service, contractor yard, light manufacturing, or comparable operations with elevated loss potential.
+            - points: 0
+              when: Hazard class cannot be verified or the operation is materially misclassified.
+        - id: years_in_operation
+          name: Years in operation
+          max_points: 4
+          data_sources:
+            - Secretary of State filing
+            - Business license
+            - Formation documents
+          scoring_rules:
+            - points: 4
+              when: Business has operated continuously for more than 5 years.
+            - points: 3
+              when: Business has operated continuously for 2 to 5 years.
+            - points: 1
+              when: Business has operated continuously for less than 2 years.
+            - points: 0
+              when: Operating history cannot be verified.
+        - id: claims_history
+          name: Prior claims history
+          max_points: 5
+          data_sources:
+            - Carrier loss runs
+            - Broker-provided loss runs
+          scoring_rules:
+            - points: 5
+              when: Verified zero claims in the last 5 completed policy years.
+            - points: 3
+              when: Verified exactly 1 claim in the last 5 completed policy years.
+            - points: 1
+              when: Verified 2 or more claims in the last 5 completed policy years.
+            - points: 0
+              when: Loss runs are missing, incomplete, or cannot be verified for the full 5-year period.
+        - id: hours_of_operation
+          name: Hours of operation
+          max_points: 3
+          data_sources:
+            - User attestation
+            - Public business listing
+            - Point-of-sale operating schedule
+          scoring_rules:
+            - points: 3
+              when: Business closes by 8:00 PM local time on all operating days.
+            - points: 2
+              when: Business closes after 8:00 PM but not later than 11:00 PM local time.
+            - points: 1
+              when: Business operates past 11:00 PM local time.
+            - points: 0
+              when: Operating hours cannot be verified.
+        - id: liquor_service
+          name: Liquor service exposure
+          max_points: 2
+          data_sources:
+            - Liquor license lookup
+            - User attestation
+          scoring_rules:
+            - points: 2
+              when: No alcohol is sold or served on premises.
+            - points: 1
+              when: Only beer and wine are sold or served on premises.
+            - points: 0
+              when: Full liquor service is offered, or alcohol exposure cannot be verified.
+        - id: cooking_exposure_controls
+          name: Commercial cooking exposure and suppression
+          max_points: 2
+          data_sources:
+            - Kitchen suppression inspection certificate
+            - Photo evidence
+            - Hood service invoice
+          scoring_rules:
+            - points: 2
+              when: No grease-laden vapor, deep frying, wok, charbroiling, or open-flame commercial cooking occurs on site.
+            - points: 1
+              when: Hazardous commercial cooking occurs and a compliant hood suppression system with current service documentation is in place.
+            - points: 0
+              when: Hazardous commercial cooking occurs without current suppression proof, or cooking exposure cannot be verified.
+        - id: cash_controls
+          name: Cash on premises and deposit controls
+          max_points: 3
+          data_sources:
+            - User attestation
+            - Cash-handling policy
+            - Safe invoice or photo evidence
+          scoring_rules:
+            - points: 3
+              when: Typical overnight cash on premises is less than 500 dollars.
+            - points: 2
+              when: Typical overnight cash on premises is 500 to 2000 dollars and a locked safe is used.
+            - points: 0
+              when: Typical overnight cash on premises exceeds 2000 dollars, or cash procedures cannot be verified.
+      bonus_opportunities:
+        - id: documented_open_close_cash_procedures
+          name: Written opening, closing, and cash-drop procedures
+          points: 2
+          actionable: true
+          what_counts: Current written procedure covering opening duties, closing duties, deposit cadence, dual-control expectations if used, and after-hours cash storage.
+    - id: documentation_readiness
+      name: Documentation Readiness
+      max_points: 25
+      factors:
+        - id: lease_or_deed
+          name: Current lease or deed
+          max_points: 3
+          data_sources:
+            - Uploaded PDF
+            - Public property record
+          scoring_rules:
+            - points: 3
+              when: Current lease or deed is uploaded and the term is active as of the scoring date.
+            - points: 1
+              when: Lease or deed is uploaded but expired, unsigned, or missing key pages.
+            - points: 0
+              when: No lease or deed is provided and no public ownership record resolves the occupancy question.
+        - id: certificate_of_occupancy
+          name: Certificate of occupancy
+          max_points: 3
+          data_sources:
+            - Uploaded PDF
+            - City permit portal
+          scoring_rules:
+            - points: 3
+              when: Valid certificate of occupancy or equivalent municipal occupancy approval is provided.
+            - points: 0
+              when: No valid occupancy approval is provided or verifiable.
+        - id: active_business_license
+          name: Active business license
+          max_points: 3
+          data_sources:
+            - Uploaded PDF
+            - City or county license lookup
+          scoring_rules:
+            - points: 3
+              when: Active business license is current through the scoring date.
+            - points: 1
+              when: License is provided but expired.
+            - points: 0
+              when: No business license is provided or the license cannot be verified.
+        - id: prior_loss_runs
+          name: Prior loss runs
+          max_points: 4
+          data_sources:
+            - Carrier-provided PDF
+            - Broker-provided PDF
+          scoring_rules:
+            - points: 4
+              when: Complete 5-year loss runs are provided with all carriers represented.
+            - points: 2
+              when: Partial loss runs are provided but at least one year or one carrier is missing.
+            - points: 0
+              when: No loss runs are provided.
+        - id: financial_statements
+          name: Financial statements or tax returns
+          max_points: 3
+          data_sources:
+            - Uploaded P&L
+            - Uploaded balance sheet
+            - Uploaded tax return
+          scoring_rules:
+            - points: 3
+              when: Two full years of financial statements or tax returns are provided.
+            - points: 2
+              when: One full year of financial statements or tax returns is provided.
+            - points: 0
+              when: No current financial statements or tax returns are provided.
+        - id: written_safety_procedures
+          name: Written safety and emergency procedures
+          max_points: 3
+          data_sources:
+            - Uploaded handbook
+            - Uploaded emergency plan
+          scoring_rules:
+            - points: 3
+              when: Written safety or emergency procedures are uploaded and clearly apply to the current location and operations.
+            - points: 1
+              when: Informal or outdated procedures are provided but are not clearly current or location-specific.
+            - points: 0
+              when: No written procedures are provided.
+        - id: vendor_cois
+          name: Vendor certificates of insurance
+          max_points: 3
+          data_sources:
+            - Uploaded COI packet
+            - Contract file
+          scoring_rules:
+            - points: 3
+              when: Current COIs are on file for all major vendors and contractors with ongoing site access or service obligations.
+            - points: 1
+              when: COIs are on file for some, but not all, major vendors and contractors.
+            - points: 0
+              when: No COIs are on file or vendor scope cannot be reconciled.
+        - id: maintenance_logs
+          name: Equipment and building maintenance logs
+          max_points: 3
+          data_sources:
+            - Uploaded maintenance log
+            - Service invoices
+          scoring_rules:
+            - points: 3
+              when: Maintenance logs or service records are complete for major building systems and insured equipment.
+            - points: 1
+              when: Partial maintenance records exist but at least one major system has no current evidence.
+            - points: 0
+              when: No maintenance records are provided.
+      bonus_opportunities:
+        - id: complete_document_package
+          name: Complete document package
+          points: 3
+          actionable: true
+          what_counts: Every documentation factor in this pillar receives full points at the same time.
+    - id: mitigation_controls
+      name: Mitigation & Controls
+      max_points: 20
+      factors:
+        - id: security_cameras
+          name: Security cameras
+          max_points: 4
+          data_sources:
+            - Photo evidence
+            - Camera invoice
+            - Cloud DVR screenshot
+          scoring_rules:
+            - points: 4
+              when: At least 4 cameras cover entrances, exits, and cash-handling areas and footage is retained in a retrievable system.
+            - points: 2
+              when: 1 to 3 cameras are present or camera coverage is incomplete.
+            - points: 0
+              when: No cameras are present or no reliable evidence is provided.
+        - id: employee_safety_training
+          name: Employee safety training
+          max_points: 3
+          data_sources:
+            - Training roster
+            - OSHA certificate
+            - LMS export
+          scoring_rules:
+            - points: 3
+              when: Annual safety training is documented for current staff within the last 12 months.
+            - points: 2
+              when: Training is documented but older than 12 months or not all current staff are covered.
+            - points: 0
+              when: No safety training evidence is provided.
+        - id: cybersecurity_basics
+          name: Cybersecurity basics for payment or customer data
+          max_points: 3
+          data_sources:
+            - PCI attestation
+            - MFA screenshot
+            - Written cyber policy
+          scoring_rules:
+            - points: 3
+              when: PCI obligations are current if applicable and MFA is enabled on core payment or admin systems.
+            - points: 1
+              when: Basic cyber controls exist but either PCI evidence or MFA evidence is missing.
+            - points: 0
+              when: No cyber control evidence is provided for a business that stores, transmits, or processes payment or customer data.
+        - id: workers_comp_class_accuracy
+          name: Workers' compensation class-code accuracy
+          max_points: 3
+          data_sources:
+            - Workers' comp policy
+            - NCCI or state bureau lookup
+            - Payroll classification summary
+          scoring_rules:
+            - points: 3
+              when: Workers' comp class codes align with actual operations and payroll segmentation.
+            - points: 0
+              when: Class codes are missing, inaccurate, or cannot be verified against operations.
+        - id: signage_and_lighting
+          name: Exterior signage and lighting
+          max_points: 3
+          data_sources:
+            - Daytime photo
+            - Nighttime photo
+          scoring_rules:
+            - points: 3
+              when: Exterior entry points and customer approach paths are clearly lit and primary business signage is legible.
+            - points: 1
+              when: Lighting or signage is present but coverage is incomplete or visibly weak.
+            - points: 0
+              when: Exterior lighting is inadequate, signage is absent, or evidence is not provided.
+        - id: emergency_contact_list
+          name: Posted emergency contact list
+          max_points: 2
+          data_sources:
+            - Photo evidence
+          scoring_rules:
+            - points: 2
+              when: Emergency contact list is visibly posted and includes current internal and emergency contacts.
+            - points: 0
+              when: No posted emergency contact list is visible.
+        - id: annual_property_inspection
+          name: Annual property inspection
+          max_points: 2
+          data_sources:
+            - Inspection report
+            - Walkthrough checklist
+          scoring_rules:
+            - points: 2
+              when: Property inspection is completed within the last 12 months.
+            - points: 1
+              when: Property inspection is 12 to 24 months old.
+            - points: 0
+              when: No inspection is provided or the latest inspection is older than 24 months.
+      bonus_opportunities:
+        - id: business_continuity_plan
+          name: Business continuity and incident response plan
+          points: 3
+          actionable: true
+          what_counts: Current written plan covering emergency shutdown, key contacts, vendor fallback, data recovery, and reopening steps.

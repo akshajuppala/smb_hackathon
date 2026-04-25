@@ -1,0 +1,356 @@
+const state = {
+  framework: null,
+  searchTerm: "",
+  pillarId: "all",
+};
+
+const elements = {
+  summary: document.querySelector("#summary"),
+  searchInput: document.querySelector("#search-input"),
+  pillarFilter: document.querySelector("#pillar-filter"),
+  gradeStrip: document.querySelector("#grade-strip"),
+  factorCount: document.querySelector("#factor-count"),
+  factorTable: document.querySelector("#factor-table"),
+  bonusCount: document.querySelector("#bonus-count"),
+  bonusTable: document.querySelector("#bonus-table"),
+  downloadPdf: document.querySelector("#download-pdf"),
+};
+
+const evidenceGuidance = {
+  "Alarm contract": "Ask the alarm vendor or monitoring provider for the active service contract or account confirmation.",
+  "Alarm monitoring contract": "Request the current central-station monitoring agreement from the alarm provider.",
+  "ArcGIS public data": "Search the local city, county, or fire authority ArcGIS open data portal for fire station layers.",
+  "Assessor record": "Look up the parcel in the county assessor portal and capture the building or parcel record.",
+  "Broker-provided PDF": "Ask the insured's broker to export or forward the carrier-issued document as a PDF.",
+  "Broker-provided loss runs": "Request five completed policy years of loss runs from the current or prior broker.",
+  "Business license": "Upload the issued business license or retrieve it from the city or county license portal.",
+  "Camera invoice": "Use the purchase or installation invoice showing camera quantity, date, and vendor.",
+  "Carrier loss runs": "Request official loss runs directly from each prior carrier for the last five policy years.",
+  "Carrier submission data": "Use the application, supplemental forms, or submission packet sent to the insurance carrier.",
+  "Carrier-provided PDF": "Request the official PDF from the issuing carrier or carrier portal.",
+  "Cash-handling policy": "Upload the written internal policy for deposits, safe use, register closeout, and overnight cash.",
+  "City or county license lookup": "Search the public city or county business license database by legal name or address.",
+  "City permit portal": "Search the local building or permitting portal by address, parcel, or permit number.",
+  "Cloud DVR screenshot": "Capture the camera system screen showing retained footage, cloud storage, or device list.",
+  "Contract file": "Review vendor contracts and attach the COIs stored with those vendor files.",
+  "County assessor record": "Search the county assessor database by parcel, address, or owner and save the property record.",
+  "Daytime photo": "Take a clear daytime photo of the exterior entry, signage, parking, and customer approach paths.",
+  "FEMA Flood Map Service Center": "Search the address in FEMA's flood map tool and save the mapped flood-zone result.",
+  "Fire alarm inspection certificate": "Ask the alarm or fire protection vendor for the latest inspection certificate.",
+  "Fire protection inspection certificate": "Ask the sprinkler contractor for the current annual or quarterly inspection certificate.",
+  "Formation documents": "Use Secretary of State filings, articles of organization, or formation certificates.",
+  "Hood service invoice": "Request the latest hood cleaning or suppression service invoice from the kitchen service vendor.",
+  "Inspection report": "Upload the most recent property, safety, or insurance inspection report.",
+  "Kitchen suppression inspection certificate": "Ask the Ansul or hood suppression vendor for the current inspection tag or certificate.",
+  "LMS export": "Export employee course completion records from the learning management system.",
+  "Liquor license lookup": "Search the state or local alcohol control database by business name, address, or license number.",
+  "MFA screenshot": "Capture admin settings showing MFA enabled for payment, POS, email, or core business systems.",
+  "Mitigation documentation": "Upload photos, invoices, permits, or inspection signoffs proving the mitigation work was completed.",
+  "Monitoring contract": "Request the active monitoring contract or service confirmation from the monitoring provider.",
+  "Municipal GIS": "Use the local GIS map to identify hydrants, stations, parcels, or hazard overlays near the property.",
+  "NCCI or state bureau lookup": "Compare policy class codes against NCCI or the applicable state rating bureau guidance.",
+  "Nighttime photo": "Take a nighttime photo showing entry lighting, signage visibility, and exterior approach paths.",
+  "OSHA certificate": "Upload OSHA 10, OSHA 30, or other safety training certificates for current employees.",
+  "OpenStreetMap": "Query mapped features near the address or verify them manually in OpenStreetMap.",
+  "PCI attestation": "Upload the current PCI SAQ, attestation of compliance, or processor compliance confirmation.",
+  "Payroll classification summary": "Use payroll reports showing employees mapped to workers' comp class codes.",
+  "Photo evidence": "Upload clear, recent photos that show the relevant equipment, condition, placement, or posted document.",
+  "Photo of control panel": "Take a clear photo of the alarm panel showing model, status, and location if possible.",
+  "Point-of-sale operating schedule": "Export store hours or operating schedules from the POS, booking, or staff scheduling system.",
+  "Property card": "Download or photograph the property card from assessor records, landlord files, or appraisal documents.",
+  "Public business listing": "Use Google Business Profile, Yelp, website hours, or another public listing for operating hours.",
+  "Public property record": "Search public property records by address or parcel to confirm deed, ownership, or occupancy details.",
+  "Roof inspection report": "Ask a licensed roofer or inspector for a dated report covering roof age and condition.",
+  "Roof replacement invoice": "Use the paid invoice, permit, or warranty packet from the roof replacement contractor.",
+  "Safe invoice or photo evidence": "Upload a safe purchase invoice or photo showing the installed safe and location.",
+  "Secretary of State filing": "Search the state business registry by legal entity name and capture formation or status records.",
+  "Security vendor invoice": "Use invoices from alarm, camera, access-control, or security installation vendors.",
+  "Service invoices": "Upload vendor invoices showing dates and scope for HVAC, electrical, hood, roof, or equipment service.",
+  "State wildfire hazard maps": "Search the state wildfire hazard map by address and save the zone result.",
+  "Third-party inspection report": "Upload a report from an independent inspector, engineer, roofer, or risk-control consultant.",
+  "Training roster": "Use a signed training attendance sheet or roster listing dates, topics, and employees trained.",
+  "Uploaded COI packet": "Collect current certificates of insurance from major vendors and upload them as one packet.",
+  "Uploaded P&L": "Upload the profit and loss statement exported from accounting software.",
+  "Uploaded PDF": "Upload the official PDF document and ensure key dates, names, and signatures are readable.",
+  "Uploaded balance sheet": "Upload the balance sheet exported from accounting software or prepared by the accountant.",
+  "Uploaded emergency plan": "Upload the written emergency plan covering current location and operations.",
+  "Uploaded handbook": "Upload the employee handbook or safety manual that applies to current staff.",
+  "Uploaded maintenance log": "Upload the maintenance log or spreadsheet showing dates, systems, vendors, and work performed.",
+  "Uploaded tax return": "Upload the filed business tax return or accountant-prepared return package.",
+  "User attestation": "Ask the business owner to answer the structured question and confirm it is accurate as of today.",
+  "User-provided NAICS code": "Ask the owner for the NAICS code and validate it against business activity and public records.",
+  "Walkthrough checklist": "Complete a dated property walkthrough checklist with photos and any open issues.",
+  "Workers' comp policy": "Upload the current workers' comp declarations page or policy schedule showing class codes.",
+  "Written cyber policy": "Upload the written cyber policy covering MFA, access control, payment handling, and incident response.",
+};
+
+init().catch((error) => {
+  console.error(error);
+  document.body.innerHTML = `
+    <main class="page">
+      <h1>Framework viewer failed to load</h1>
+      <p>Start the TypeScript server from <code>scores/</code> and reload this page.</p>
+      <pre>${escapeHtml(String(error))}</pre>
+    </main>
+  `;
+});
+
+async function init() {
+  const response = await fetch("/api/framework");
+
+  if (!response.ok) {
+    throw new Error(`Failed to load framework data: ${response.status}`);
+  }
+
+  const payload = await response.json();
+  state.framework = payload.framework;
+  hydrateStateFromUrl();
+
+  elements.searchInput.addEventListener("input", (event) => {
+    state.searchTerm = event.target.value.trim().toLowerCase();
+    renderTables();
+    updatePdfHref();
+  });
+
+  elements.pillarFilter.addEventListener("change", (event) => {
+    state.pillarId = event.target.value;
+    renderTables();
+    updatePdfHref();
+  });
+
+  renderStaticSections();
+  syncControls();
+  updatePdfHref();
+  renderTables();
+  document.body.dataset.ready = "true";
+}
+
+function renderStaticSections() {
+  const framework = state.framework;
+  const coreTotal = sum(framework.pillars.map((pillar) => pillar.max_points));
+  const factorTotal = sum(framework.pillars.map((pillar) => pillar.factors.length));
+  const bonusTotal = sum(framework.pillars.map((pillar) => pillar.bonus_opportunities.length));
+
+  elements.summary.innerHTML = `
+    <span><strong>${coreTotal}</strong> core</span>
+    <span><strong>${framework.scoring_method.bonus_max_points}</strong> bonus</span>
+    <span><strong>${factorTotal}</strong> factors</span>
+    <span><strong>${bonusTotal}</strong> bonus paths</span>
+  `;
+
+  elements.pillarFilter.innerHTML = `
+    <option value="all">All pillars</option>
+    ${framework.pillars
+      .map((pillar) => `<option value="${pillar.id}">${pillar.name}</option>`)
+      .join("")}
+  `;
+
+  elements.gradeStrip.innerHTML = framework.grade_bands
+    .map(
+      (band) => `
+        <article>
+          <strong>${band.grade}</strong>
+          <span>${band.min_core_score}-${band.max_core_score}</span>
+          <p>${band.readiness}</p>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function hydrateStateFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const searchTerm = params.get("search")?.trim().toLowerCase();
+  const pillarId = params.get("pillar");
+
+  if (searchTerm) {
+    state.searchTerm = searchTerm;
+  }
+
+  if (pillarId && pillarId !== "all") {
+    state.pillarId = pillarId;
+  }
+}
+
+function syncControls() {
+  elements.searchInput.value = state.searchTerm;
+  elements.pillarFilter.value = state.pillarId;
+}
+
+function updatePdfHref() {
+  const url = new URL("/api/pdf", window.location.origin);
+
+  if (state.searchTerm) {
+    url.searchParams.set("search", state.searchTerm);
+  }
+
+  if (state.pillarId !== "all") {
+    url.searchParams.set("pillar", state.pillarId);
+  }
+
+  elements.downloadPdf.href = url.toString();
+}
+
+function renderTables() {
+  const factors = getFactorRows().filter(matchesFilters);
+  const bonuses = getBonusRows().filter(matchesFilters);
+
+  elements.factorCount.textContent = `${factors.length} rows`;
+  elements.bonusCount.textContent = `${bonuses.length} rows`;
+
+  elements.factorTable.innerHTML = factors.length
+    ? renderFactorRowsWithDividers(factors)
+    : renderEmptyRow(5, "No factors match the current filters.");
+
+  elements.bonusTable.innerHTML = bonuses.length
+    ? bonuses.map(renderBonusRow).join("")
+    : renderEmptyRow(4, "No bonus paths match the current filters.");
+}
+
+function getFactorRows() {
+  return state.framework.pillars.flatMap((pillar) =>
+    pillar.factors.map((factor) => ({
+      pillarId: pillar.id,
+      pillarName: pillar.name,
+      pillarMax: pillar.max_points,
+      ...factor,
+    })),
+  );
+}
+
+function getBonusRows() {
+  return state.framework.pillars.flatMap((pillar) =>
+    pillar.bonus_opportunities.map((bonus) => ({
+      pillarId: pillar.id,
+      pillarName: pillar.name,
+      ...bonus,
+    })),
+  );
+}
+
+function matchesFilters(row) {
+  const matchesPillar = state.pillarId === "all" || row.pillarId === state.pillarId;
+  const searchableText = JSON.stringify(row).toLowerCase();
+  const matchesSearch = !state.searchTerm || searchableText.includes(state.searchTerm);
+
+  return matchesPillar && matchesSearch;
+}
+
+function renderFactorRowsWithDividers(rows) {
+  let currentPillarId = null;
+
+  return rows
+    .map((row) => {
+      const divider =
+        row.pillarId === currentPillarId
+          ? ""
+          : renderPillarDivider(row.pillarName, row.pillarMax);
+
+      currentPillarId = row.pillarId;
+
+      return divider + renderFactorRow(row);
+    })
+    .join("");
+}
+
+function renderPillarDivider(pillarName, pillarMax) {
+  return `
+    <tr class="pillar-divider">
+      <td colspan="5">
+        <div>
+          <strong>${pillarName}</strong>
+          <span>${pillarMax} core points</span>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+function renderFactorRow(row) {
+  return `
+    <tr>
+      <td>
+        <div class="pillar-cell">
+          <strong>${row.pillarName}</strong>
+          <span>${row.pillarMax} pts</span>
+        </div>
+      </td>
+      <td>
+        <strong>${row.name}</strong>
+      </td>
+      <td class="numeric">${row.max_points}</td>
+      <td>
+        <ol class="rule-list">
+          ${row.scoring_rules
+            .map(
+              (rule) => `
+                <li>
+                  <span class="points">${rule.points}</span>
+                  <span>${rule.when}</span>
+                </li>
+              `,
+            )
+            .join("")}
+        </ol>
+      </td>
+      <td>${renderEvidenceBadges(row.data_sources)}</td>
+    </tr>
+  `;
+}
+
+function renderBonusRow(row) {
+  return `
+    <tr>
+      <td><strong>${row.pillarName}</strong></td>
+      <td>${row.name}</td>
+      <td class="numeric">+${row.points}</td>
+      <td>${row.what_counts}</td>
+    </tr>
+  `;
+}
+
+function renderEmptyRow(colspan, message) {
+  return `
+    <tr>
+      <td class="empty" colspan="${colspan}">${message}</td>
+    </tr>
+  `;
+}
+
+function renderEvidenceBadges(sources) {
+  return `
+    <div class="evidence-list">
+      ${sources
+        .map((source) => {
+          const guidance = evidenceGuidance[source] ?? "Gather from the named source and upload a dated, readable copy.";
+
+          return `
+            <span
+              class="evidence-badge"
+              tabindex="0"
+              title="${escapeAttribute(guidance)}"
+              data-tooltip="${escapeAttribute(guidance)}"
+            >
+              ${escapeHtml(source)}
+            </span>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
+function sum(values) {
+  return values.reduce((total, value) => total + value, 0);
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value).replaceAll('"', "&quot;");
+}
+
+function escapeHtml(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
