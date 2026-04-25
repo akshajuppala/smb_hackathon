@@ -178,7 +178,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className="phone-content">
+            <div className={`phone-content ${isExteriorRecordRoute ? 'phone-content-fullscreen' : ''}`}>
               {isExteriorRecordRoute ? (
                 pageContent
               ) : (

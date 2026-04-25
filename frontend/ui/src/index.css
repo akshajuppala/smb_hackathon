@@ -149,6 +149,10 @@ body {
   scrollbar-color: rgba(107, 114, 128, 0.4) transparent;
 }
 
+.phone-content-fullscreen {
+  padding-top: 0;
+}
+
 .phone-content::-webkit-scrollbar {
   width: 6px;
 }
