@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ProgressStepper from './components/ProgressStepper'
 import GuidedCaptureScreen from './components/GuidedCaptureScreen'
 import Page1BusinessInfo from './pages/Page1_BusinessInfo'
@@ -8,6 +8,7 @@ import Page4Summary from './pages/Page4_Summary'
 
 const HOME_ROUTE = '/'
 const EXTERIOR_RECORD_ROUTE = '/exterior/record'
+const INTERIOR_RECORD_ROUTE = '/interior/record'
 
 function getCurrentPath() {
   return window.location.pathname || HOME_ROUTE
@@ -79,6 +80,8 @@ export default function App() {
   const [formData, setFormData] = useState({})
   const [pathname, setPathname] = useState(getCurrentPath)
   const [pendingExteriorRecording, setPendingExteriorRecording] = useState(null)
+  const [pendingInteriorRecording, setPendingInteriorRecording] = useState(null)
+  const contentRef = useRef(null)
 
   useEffect(() => {
     function handlePopState() {
@@ -93,6 +96,17 @@ export default function App() {
     if (path === pathname) return
     window.history.pushState({}, '', path)
     setPathname(path)
+  }
+
+  function scrollToTop() {
+    window.requestAnimationFrame(() => {
+      contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+  }
+
+  function goToStep(nextStep) {
+    setStep(nextStep)
+    scrollToTop()
   }
 
   function handleSubmit() {
@@ -110,14 +124,38 @@ export default function App() {
     setPendingExteriorRecording(mockRecording)
     setStep(2)
     navigate(HOME_ROUTE)
+    scrollToTop()
+  }
+
+  function handleFinishInteriorRecording() {
+    const mockRecording = new File(
+      ['demo interior walkthrough'],
+      'interior-walkthrough-demo.mp4',
+      { type: 'video/mp4' }
+    )
+
+    setPendingInteriorRecording(mockRecording)
+    setStep(3)
+    navigate(HOME_ROUTE)
+    scrollToTop()
   }
 
   const completion = computeCompletion(formData)
   const isExteriorRecordRoute = pathname === EXTERIOR_RECORD_ROUTE
+  const isInteriorRecordRoute = pathname === INTERIOR_RECORD_ROUTE
+  const isRecordRoute = isExteriorRecordRoute || isInteriorRecordRoute
   const pageContent = isExteriorRecordRoute ? (
     <GuidedCaptureScreen
+      message="Start by showing the storefront, main entrance, windows, lighting, and parking area."
       onBack={() => navigate(HOME_ROUTE)}
       onFinish={handleFinishExteriorRecording}
+      videoSrc="/media/exterior-loop.mp4"
+    />
+  ) : isInteriorRecordRoute ? (
+    <GuidedCaptureScreen
+      message="Start with the ceiling and sprinklers, then capture the kitchen line, dining area, exits, and utility spaces."
+      onBack={() => navigate(HOME_ROUTE)}
+      onFinish={handleFinishInteriorRecording}
     />
   ) : submitted ? (
     <SubmissionSuccess data={formData} />
@@ -125,17 +163,18 @@ export default function App() {
     <Page1BusinessInfo
       data={formData}
       onChange={setFormData}
-      onNext={() => setStep(2)}
+      onNext={() => goToStep(2)}
     />
   ) : step === 2 ? (
     <Page2Exterior
       data={formData}
       onChange={setFormData}
-      onNext={() => setStep(3)}
-      onBack={() => setStep(1)}
+      onNext={() => goToStep(3)}
+      onBack={() => goToStep(1)}
       onRecordNow={() => {
         setStep(2)
         navigate(EXTERIOR_RECORD_ROUTE)
+        scrollToTop()
       }}
       pendingRecordedFile={pendingExteriorRecording}
       onPendingRecordedFileHandled={() => setPendingExteriorRecording(null)}
@@ -144,14 +183,21 @@ export default function App() {
     <Page3Interior
       data={formData}
       onChange={setFormData}
-      onNext={() => setStep(4)}
-      onBack={() => setStep(2)}
+      onNext={() => goToStep(4)}
+      onBack={() => goToStep(2)}
+      onRecordNow={() => {
+        setStep(3)
+        navigate(INTERIOR_RECORD_ROUTE)
+        scrollToTop()
+      }}
+      pendingRecordedFile={pendingInteriorRecording}
+      onPendingRecordedFileHandled={() => setPendingInteriorRecording(null)}
     />
   ) : (
     <Page4Summary
       data={formData}
       onChange={setFormData}
-      onBack={() => setStep(3)}
+      onBack={() => goToStep(3)}
       onSubmit={handleSubmit}
     />
   )
@@ -178,8 +224,11 @@ export default function App() {
               </div>
             </div>
 
-            <div className={`phone-content ${isExteriorRecordRoute ? 'phone-content-fullscreen' : ''}`}>
-              {isExteriorRecordRoute ? (
+            <div
+              ref={contentRef}
+              className={`phone-content ${isRecordRoute ? 'phone-content-fullscreen' : ''}`}
+            >
+              {isRecordRoute ? (
                 pageContent
               ) : (
                 <div className="max-w-2xl mx-auto px-4 pt-4 pb-8">
@@ -198,7 +247,7 @@ export default function App() {
                     <ProgressStepper
                       currentStep={step}
                       completion={completion}
-                      onStepClick={setStep}
+                      onStepClick={goToStep}
                     />
                   )}
 
