@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import VideoUpload from '../components/VideoUpload'
+import { useEffect, useState } from 'react'
 import ChecklistSection from '../components/ChecklistSection'
 import PDFUpload from '../components/PDFUpload'
 import { buildingChecklist, fireSafetyChecklist } from '../data/checklistData'
@@ -13,7 +12,15 @@ const MOCK_CV_INTERIOR = [
   { id: 'structural_damage', label: 'No visible water stains, mold, or damage', detected: true },
 ]
 
-export default function Page3Interior({ data, onChange, onBack, onNext }) {
+export default function Page3Interior({
+  data,
+  onChange,
+  onBack,
+  onNext,
+  onRecordNow,
+  pendingRecordedFile,
+  onPendingRecordedFileHandled,
+}) {
   const [analyzing, setAnalyzing] = useState(false)
   const [cvResults, setCvResults] = useState(null)
 
@@ -37,6 +44,13 @@ export default function Page3Interior({ data, onChange, onBack, onNext }) {
     }, 3500)
   }
 
+  useEffect(() => {
+    if (!pendingRecordedFile) return
+
+    handleVideoFile(pendingRecordedFile)
+    onPendingRecordedFileHandled?.()
+  }, [pendingRecordedFile, onPendingRecordedFileHandled])
+
   function toggleFire(id) {
     onChange({ ...data, fireSafetyChecked: { ...(data.fireSafetyChecked || {}), [id]: !data.fireSafetyChecked?.[id] } })
   }
@@ -50,19 +64,64 @@ export default function Page3Interior({ data, onChange, onBack, onNext }) {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-1">Interior Assessment</h2>
         <p className="text-gray-500 text-sm">
-          Upload an interior video walkthrough. Start with the ceiling/roof, then kitchen, dining area, exits, and utility areas. We'll detect sprinklers, extinguishers, and more.
+          Start a guided interior walkthrough. We’ll review the recording for fire safety and building condition signals before you complete the rest of the form.
         </p>
       </div>
 
-      {/* Video Upload */}
       <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-6">
-        <VideoUpload
-          label="Interior video walkthrough"
-          hint="Film the ceiling (sprinklers), kitchen hood system, fire extinguishers with visible tags, electrical panel, and all exits. Aim for 3–7 minutes."
-          onFile={handleVideoFile}
-          analyzing={analyzing}
-          analysisResult={cvResults}
-        />
+        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50/70 p-6 text-center">
+          <p className="text-sm font-semibold text-gray-800">Capture your interior walkthrough</p>
+          <p className="mt-2 text-xs text-gray-500">
+            Start at the ceiling, then record the kitchen line, extinguishers, electrical panel, exits, and utility spaces.
+          </p>
+          <button
+            type="button"
+            onClick={onRecordNow}
+            className="mt-4 inline-flex items-center justify-center rounded-xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-700"
+          >
+            {data.interiorVideo ? 'Restart assesment' : 'Start assesment'}
+          </button>
+          {data.interiorVideo && !analyzing && (
+            <p className="mt-3 text-xs text-green-700">
+              Recorded walkthrough attached: {data.interiorVideo.name}
+            </p>
+          )}
+        </div>
+
+        {analyzing && (
+          <div className="mt-4 flex items-center gap-3 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            <svg className="h-4 w-4 animate-spin flex-shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            </svg>
+            Analyzing video with computer vision model...
+          </div>
+        )}
+
+        {cvResults && !analyzing && (
+          <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3">
+              <span className="text-green-500">✓</span>
+              <span className="text-sm font-semibold text-gray-800">CV Analysis Complete</span>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {cvResults.map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                  <span className="min-w-0 text-sm text-gray-700">{item.label}</span>
+                  <span className={`flex-shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    item.detected === true
+                      ? 'bg-green-100 text-green-700'
+                      : item.detected === false
+                      ? 'bg-red-100 text-red-600'
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {item.detected === true ? 'Detected' : item.detected === false ? 'Not found' : 'Unclear'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Sprinkler Section */}

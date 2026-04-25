@@ -12,6 +12,8 @@ import { buildVoiceBusinessPrefill } from './utils/voiceBusinessPrefill'
 
 const HOME_ROUTE = '/'
 const EXTERIOR_RECORD_ROUTE = '/exterior/record'
+const INTERIOR_RECORD_ROUTE = '/interior/record'
+
 const SCREENS = {
   start: 'start',
   voiceIntake: 'voice-intake',
@@ -63,6 +65,7 @@ export default function App() {
   const [formData, setFormData] = useState({})
   const [pathname, setPathname] = useState(getCurrentPath)
   const [pendingExteriorRecording, setPendingExteriorRecording] = useState(null)
+  const [pendingInteriorRecording, setPendingInteriorRecording] = useState(null)
   const contentRef = useRef(null)
 
   useEffect(() => {
@@ -119,9 +122,23 @@ export default function App() {
     navigate(HOME_ROUTE)
   }
 
+  function handleFinishInteriorRecording() {
+    const mockRecording = new File(
+      ['demo interior walkthrough'],
+      'interior-walkthrough-demo.mp4',
+      { type: 'video/mp4' }
+    )
+
+    setPendingInteriorRecording(mockRecording)
+    goToScreen(SCREENS.interior)
+    navigate(HOME_ROUTE)
+  }
+
   const completion = computeCompletion(formData)
   const currentStep = SCREEN_TO_STEP[currentScreen] || null
   const isExteriorRecordRoute = pathname === EXTERIOR_RECORD_ROUTE
+  const isInteriorRecordRoute = pathname === INTERIOR_RECORD_ROUTE
+  const isRecordRoute = isExteriorRecordRoute || isInteriorRecordRoute
 
   const screenContent = {
     [SCREENS.start]: (
@@ -163,6 +180,12 @@ export default function App() {
         onChange={setFormData}
         onNext={() => goToScreen(SCREENS.summary)}
         onBack={() => goToScreen(SCREENS.exterior)}
+        onRecordNow={() => {
+          goToScreen(SCREENS.interior)
+          navigate(INTERIOR_RECORD_ROUTE)
+        }}
+        pendingRecordedFile={pendingInteriorRecording}
+        onPendingRecordedFileHandled={() => setPendingInteriorRecording(null)}
       />
     ),
     [SCREENS.summary]: (
@@ -178,8 +201,16 @@ export default function App() {
 
   const pageContent = isExteriorRecordRoute ? (
     <GuidedCaptureScreen
+      message="Start by showing the storefront, main entrance, windows, lighting, and parking area."
       onBack={() => navigate(HOME_ROUTE)}
       onFinish={handleFinishExteriorRecording}
+      videoSrc="/media/exterior-loop.mp4"
+    />
+  ) : isInteriorRecordRoute ? (
+    <GuidedCaptureScreen
+      message="Start with the ceiling and sprinklers, then capture the kitchen line, dining area, exits, and utility spaces."
+      onBack={() => navigate(HOME_ROUTE)}
+      onFinish={handleFinishInteriorRecording}
     />
   ) : (
     screenContent[currentScreen]
@@ -209,9 +240,9 @@ export default function App() {
 
             <div
               ref={contentRef}
-              className={`phone-content ${isExteriorRecordRoute ? 'phone-content-fullscreen' : ''}`}
+              className={`phone-content ${isRecordRoute ? 'phone-content-fullscreen' : ''}`}
             >
-              {isExteriorRecordRoute ? (
+              {isRecordRoute ? (
                 pageContent
               ) : (
                 <div className="max-w-2xl mx-auto px-4 pt-4 pb-8">
