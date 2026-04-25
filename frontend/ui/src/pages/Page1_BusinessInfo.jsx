@@ -12,6 +12,10 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
   const [riskResult, setRiskResult] = useState(null)
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [reviewsResult, setReviewsResult] = useState(null)
+  const [websiteLoading, setWebsiteLoading] = useState(false)
+  const [websiteError, setWebsiteError] = useState('')
+  const [naicsLoading, setNaicsLoading] = useState(false)
+  const [naicsError, setNaicsError] = useState('')
 
   useEffect(() => {
     if (data.address?.length > 10) {
@@ -22,8 +26,100 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
     }
   }, [data.address])
 
+  useEffect(() => {
+    const businessName = data.businessName?.trim()
+    const address = data.address?.trim()
+
+    if (!businessName || businessName.length < 2 || !address || address.length < 10) {
+      setWebsiteLoading(false)
+      setWebsiteError('')
+      return
+    }
+
+    const lookupQuery = `${businessName}::${address}`
+    if (data.websiteLookupQuery === lookupQuery) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(async () => {
+      setWebsiteLoading(true)
+      setWebsiteError('')
+
+      try {
+        const params = new URLSearchParams({
+          businessName,
+          address,
+        })
+        const response = await fetch(`/api/place-website?${params.toString()}`)
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(result.details || result.error || 'Lookup failed')
+        }
+
+        onChange({
+          ...data,
+          websiteUrl: result.websiteUrl || data.websiteUrl || '',
+          googlePlaceUrl: result.googlePlaceUrl || data.googlePlaceUrl || '',
+          websiteLookupQuery: lookupQuery,
+        })
+      } catch (error) {
+        setWebsiteError(error.message || 'Could not find a website yet.')
+      } finally {
+        setWebsiteLoading(false)
+      }
+    }, 800)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [data.address, data.businessName])
+
   function handleChange(field, value) {
     onChange({ ...data, [field]: value })
+  }
+
+  async function handleSuggestNaicsCode() {
+    if (!data.businessName?.trim() || !data.businessDescription?.trim()) {
+      setNaicsError('Enter the business name and description before classifying.')
+      return
+    }
+
+    setNaicsLoading(true)
+    setNaicsError('')
+
+    try {
+      const response = await fetch('/api/naics-classify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          businessName: data.businessName,
+          businessDescription: data.businessDescription,
+          websiteUrl: data.websiteUrl,
+          address: data.address,
+          cuisineType: data.cuisineType,
+          serveAlcohol: data.serveAlcohol,
+          hasCatering: data.hasCatering,
+          hasFoodTruck: data.hasFoodTruck,
+          hasDelivery: data.hasDelivery,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.details || result.error || 'Could not classify NAICS code')
+      }
+
+      onChange({
+        ...data,
+        suggestedNaics: result,
+      })
+    } catch (error) {
+      setNaicsError(error.message || 'Could not classify NAICS code')
+    } finally {
+      setNaicsLoading(false)
+    }
   }
 
   function simulateReviewScrape() {
@@ -100,6 +196,78 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
     )
   }
 
+  function renderBusinessEnhancements() {
+    return (
+      <>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1.5">Website</label>
+          <input
+            type="url"
+            placeholder="https://www.yourrestaurant.com"
+            value={data.websiteUrl || ''}
+            onChange={(event) => handleChange('websiteUrl', event.target.value)}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+          />
+          <div className="mt-1 min-h-5 text-xs">
+            {websiteLoading ? (
+              <span className="text-blue-600">Looking up website from business name and address...</span>
+            ) : websiteError ? (
+              <span className="text-orange-600">{websiteError}</span>
+            ) : data.websiteUrl ? (
+              <span className="text-green-600">Website found automatically.</span>
+            ) : (
+              <span className="text-gray-500">We will try to auto-fill this after you enter the business name and address.</span>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-blue-200 bg-blue-50/80 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-blue-950">NAICS classification</p>
+              <p className="mt-1 text-xs text-blue-900/80">
+                Use OpenRouter to suggest one official 2022 NAICS code from the `722` restaurant and food-service leaf codes.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleSuggestNaicsCode}
+              disabled={naicsLoading}
+              className="inline-flex items-center justify-center rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {naicsLoading ? 'Classifying...' : 'Suggest NAICS code'}
+            </button>
+          </div>
+
+          {naicsError && <p className="mt-3 text-xs text-red-700">{naicsError}</p>}
+
+          {data.suggestedNaics && !naicsError && (
+            <div className="mt-4 rounded-xl border border-blue-200 bg-white p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">Suggested code</p>
+                  <p className="mt-1 text-xl font-bold text-gray-900">
+                    {data.suggestedNaics.code} <span className="text-base font-semibold text-gray-700">{data.suggestedNaics.name}</span>
+                  </p>
+                </div>
+                <div className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
+                  Confidence {Math.round((data.suggestedNaics.confidence || 0) * 100)}%
+                </div>
+              </div>
+
+              <p className="mt-3 text-sm text-gray-700">{data.suggestedNaics.officialScope}</p>
+
+              <div className="mt-3 rounded-lg bg-gray-50 px-3 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Model reason</p>
+                <p className="mt-1 text-sm text-gray-700">{data.suggestedNaics.reason}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </>
+    )
+  }
+
   function renderSection(section) {
     const standardFields = section.fieldKeys.map((fieldKey) => BUSINESS_INFO_FIELD_MAP[fieldKey]).filter(Boolean)
     const checkboxFields = (section.checkboxKeys || []).map((fieldKey) => BUSINESS_INFO_FIELD_MAP[fieldKey]).filter(Boolean)
@@ -131,6 +299,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
                 </label>
               ))}
             </div>
+            {renderBusinessEnhancements()}
           </div>
         )}
 

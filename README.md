@@ -1,4 +1,5 @@
 # smb_hackathon
+our name: Simply Covered
 
 ## Framework Viewer
 
