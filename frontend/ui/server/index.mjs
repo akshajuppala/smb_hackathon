@@ -1,8 +1,10 @@
 import http from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
-import { mkdir, writeFile, appendFile } from 'node:fs/promises'
+import { mkdir, writeFile, appendFile, readFile } from 'node:fs/promises'
 import dotenv from 'dotenv'
+import yaml from 'js-yaml'
+import { chromium } from 'playwright'
 import { NAICS_722_LEAF_CODES, NAICS_722_LEAF_CODE_MAP } from '../src/data/naics722LeafCodes.js'
 import { buildVoiceBusinessPrefillPrompt } from '../src/utils/voiceBusinessPrefill.js'
 
@@ -17,6 +19,9 @@ const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-3-flash-
 const TRACE_DIR = path.resolve(process.cwd(), '..', '..', '.context')
 const TRACE_LATEST_FILE = path.join(TRACE_DIR, 'voice-prefill-latest.json')
 const TRACE_HISTORY_FILE = path.join(TRACE_DIR, 'voice-prefill-traces.ndjson')
+const SCORING_FRAMEWORK_PATH = path.resolve(process.cwd(), 'src/data/insuranceReadinessFramework.yaml')
+const SCORING_FRAMEWORK_ROUTE = '/scoring-framework'
+const DEFAULT_FRONTEND_ORIGIN = process.env.SCORING_FRAMEWORK_APP_ORIGIN || 'http://127.0.0.1:5173'
 
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
@@ -304,6 +309,86 @@ async function fetchPlaceWebsite(searchParams) {
   }
 }
 
+async function readScoringFramework() {
+  const document = await readFile(SCORING_FRAMEWORK_PATH, 'utf8')
+  return yaml.load(document)
+}
+
+function getScoringFrameworkOrigin(request) {
+  const referer = request.headers.referer
+
+  if (referer) {
+    try {
+      return new URL(referer).origin
+    } catch {
+      return DEFAULT_FRONTEND_ORIGIN
+    }
+  }
+
+  return DEFAULT_FRONTEND_ORIGIN
+}
+
+async function renderScoringFrameworkPdf(url, request) {
+  const pageUrl = new URL(SCORING_FRAMEWORK_ROUTE, getScoringFrameworkOrigin(request))
+  const search = url.searchParams.get('search')
+  const pillar = url.searchParams.get('pillar')
+
+  pageUrl.searchParams.set('pdf', '1')
+
+  if (search) {
+    pageUrl.searchParams.set('search', search)
+  }
+
+  if (pillar) {
+    pageUrl.searchParams.set('pillar', pillar)
+  }
+
+  const browser = await launchBrowser()
+  const page = await browser.newPage({ viewport: { width: 1100, height: 1500 } })
+
+  try {
+    await page.emulateMedia({ media: 'screen' })
+    await page.goto(pageUrl.toString(), { waitUntil: 'networkidle' })
+    await page.waitForFunction(() => document.body.dataset.ready === 'true')
+
+    const pageScale = await getPdfScale(page)
+
+    return await page.pdf({
+      format: 'A4',
+      landscape: false,
+      scale: pageScale,
+      printBackground: true,
+      preferCSSPageSize: false,
+      margin: {
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm',
+      },
+    })
+  } finally {
+    await browser.close()
+  }
+}
+
+async function getPdfScale(page) {
+  const pageWidth = await page.evaluate(() => document.documentElement.scrollWidth)
+  const a4PortraitWidthInches = 8.27
+  const horizontalMarginInches = 20 / 25.4
+  const printableWidthPx = (a4PortraitWidthInches - horizontalMarginInches) * 96
+  const scale = printableWidthPx / pageWidth
+
+  return Math.max(0.1, Math.min(1, scale))
+}
+
+async function launchBrowser() {
+  try {
+    return await chromium.launch({ channel: 'chrome' })
+  } catch {
+    return chromium.launch()
+  }
+}
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url || '/', 'http://127.0.0.1')
 
@@ -332,6 +417,34 @@ const server = http.createServer(async (request, response) => {
     } catch (error) {
       sendJson(response, /Missing businessName or address|Missing GOOGLE_PLACES_API_KEY/.test(error.message) ? 400 : 500, {
         error: error.message || 'Lookup request failed',
+      })
+    }
+    return
+  }
+
+  if (url.pathname === '/api/scoring-framework' && request.method === 'GET') {
+    try {
+      const framework = await readScoringFramework()
+      sendJson(response, 200, framework)
+    } catch (error) {
+      sendJson(response, 500, {
+        error: error instanceof Error ? error.message : 'Failed to load scoring framework',
+      })
+    }
+    return
+  }
+
+  if (url.pathname === '/api/scoring-framework/pdf' && request.method === 'GET') {
+    try {
+      const pdf = await renderScoringFrameworkPdf(url, request)
+      response.writeHead(200, {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="insurance-readiness-framework.pdf"',
+      })
+      response.end(pdf)
+    } catch (error) {
+      sendJson(response, 500, {
+        error: error instanceof Error ? error.message : 'Failed to render scoring PDF',
       })
     }
     return
