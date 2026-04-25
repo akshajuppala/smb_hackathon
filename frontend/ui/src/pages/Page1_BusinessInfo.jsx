@@ -51,6 +51,20 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
         <p className="text-gray-500 text-sm">We'll use this to prepare your insurance risk assessment.</p>
       </div>
 
+      {data.voicePrefillApplied && (
+        <div className="mb-5 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-4">
+          <div className="flex items-start gap-3">
+            <span className="text-xl">✨</span>
+            <div>
+              <p className="text-sm font-semibold text-teal-900">Voice notes applied</p>
+              <p className="mt-1 text-sm text-teal-800">
+                We prefilled this form from your voice intake. Review the fields below and adjust anything before continuing.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Field 1: About yourself */}
       <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-5">
         <div className="flex items-center gap-2 mb-4">
