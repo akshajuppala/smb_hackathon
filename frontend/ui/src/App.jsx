@@ -140,6 +140,7 @@ export default function App() {
 
   const completion = computeCompletion(formData)
   const currentStep = SCREEN_TO_STEP[currentScreen] || null
+  const headerStep = currentScreen === SCREENS.voiceIntake ? 1 : currentStep
   const isExteriorRecordRoute = pathname === EXTERIOR_RECORD_ROUTE
   const isInteriorRecordRoute = pathname === INTERIOR_RECORD_ROUTE
   const isRecordRoute = isExteriorRecordRoute || isInteriorRecordRoute
@@ -256,19 +257,21 @@ export default function App() {
                       <span className="text-sm">🏢</span>
                       <span className="brand-wordmark text-xl sm:text-2xl text-slate-700">Simply Covered</span>
                     </div>
-                    <h1 className="mt-8 max-w-xl text-center text-gray-900 sm:mt-10 mx-auto">
-                      <span className="block text-[2rem] font-extrabold leading-none sm:text-[2.4rem]">Good Evening!</span>
-                      <span className="mt-2 block text-lg font-semibold leading-snug text-slate-700 sm:text-[1.35rem]">
-                        Ready to start your Insurance Readiness Check?
-                      </span>
-                    </h1>
+                    {currentScreen === SCREENS.voiceIntake || currentScreen === SCREENS.businessInfo ? null : (
+                      <h1 className="mt-8 max-w-xl text-center text-gray-900 sm:mt-10 mx-auto">
+                        <span className="block text-[2rem] font-extrabold leading-none sm:text-[2.4rem]">Good Evening!</span>
+                        <span className="mt-2 block text-lg font-semibold leading-snug text-slate-700 sm:text-[1.35rem]">
+                          Ready to start your Insurance Readiness Check?
+                        </span>
+                      </h1>
+                    )}
                   </div>
 
-                  {currentStep ? (
+                  {headerStep ? (
                     <ProgressStepper
-                      currentStep={currentStep}
+                      currentStep={headerStep}
                       completion={completion}
-                      onStepClick={(stepNumber) => {
+                      onStepClick={currentScreen === SCREENS.voiceIntake ? undefined : (stepNumber) => {
                         const nextScreen = STEP_TO_SCREEN[stepNumber]
                         if (nextScreen) goToScreen(nextScreen)
                       }}

@@ -237,17 +237,21 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
 
   return (
     <div className="space-y-5">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">Tell us about your restaurant</h2>
+        <p className="text-gray-500 text-sm">We&apos;ll use this to prepare your insurance risk assessment.</p>
+      </div>
+
       <div className="overflow-hidden rounded-[28px] border border-gray-200 bg-white shadow-sm">
         <div className="bg-gradient-to-br from-orange-100 via-amber-50 to-teal-50 px-5 py-6 sm:px-6">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-600 shadow-sm">
             <span className="text-sm">🎙️</span>
             Voice Intake
           </div>
-          <h2 className="mt-4 text-2xl font-bold text-gray-900">Tell us more about your business</h2>
-          <ul className="mt-3 max-w-md list-disc space-y-1 pl-5 text-sm text-gray-600 marker:text-orange-500">
-            <li>What is the name of your business, and what do you do?</li>
-            <li>What is the address?</li>
-            <li>Who are your customers?</li>
+          <ul className="mt-4 max-w-md list-disc space-y-1 pl-5 text-sm text-gray-600 marker:text-orange-500">
+            <li>What is the name of your business and what is the address?</li>
+            <li>Who are your customers? What food do you serve?</li>
+            <li>Do you serve alcohol?</li>
           </ul>
         </div>
 
