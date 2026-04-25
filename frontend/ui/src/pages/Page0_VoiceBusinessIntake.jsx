@@ -1,82 +1,216 @@
 import { useEffect, useRef, useState } from 'react'
 
-function getSpeechRecognition() {
-  if (typeof window === 'undefined') return null
-  return window.SpeechRecognition || window.webkitSpeechRecognition || null
+const DEEPGRAM_MODEL = 'nova-3'
+const MEDIA_RECORDER_TIMESLICE_MS = 250
+const SUPPORTED_MIME_TYPES = ['audio/webm;codecs=opus', 'audio/webm']
+const DEEPGRAM_API_KEY = import.meta.env.DEEPGRAM_API_KEY ?? import.meta.env.VITE_DEEPGRAM_API_KEY ?? ''
+
+function isVoiceCaptureSupported() {
+  if (typeof window === 'undefined') return false
+  return Boolean(window.MediaRecorder && navigator.mediaDevices?.getUserMedia)
+}
+
+function appendTranscript(currentTranscript, nextTranscript) {
+  return `${currentTranscript} ${nextTranscript}`.trim()
+}
+
+function combineTranscript(finalTranscript, interimTranscript) {
+  return `${finalTranscript} ${interimTranscript}`.trim()
+}
+
+function getRecorderOptions() {
+  if (typeof window === 'undefined') return undefined
+
+  const supportedMimeType = SUPPORTED_MIME_TYPES.find((mimeType) => window.MediaRecorder?.isTypeSupported?.(mimeType))
+  return supportedMimeType ? { mimeType: supportedMimeType } : undefined
 }
 
 export default function Page0VoiceBusinessIntake({ initialTranscript = '', onContinue }) {
-  const recognitionRef = useRef(null)
   const finalTranscriptRef = useRef(initialTranscript)
+  const mediaRecorderRef = useRef(null)
+  const mediaStreamRef = useRef(null)
+  const socketRef = useRef(null)
+  const sessionIdRef = useRef(0)
   const [transcript, setTranscript] = useState(initialTranscript)
   const [isListening, setIsListening] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [statusMessage, setStatusMessage] = useState('Ready to capture with Deepgram.')
 
   useEffect(() => {
-    setIsSupported(Boolean(getSpeechRecognition()))
+    setIsSupported(isVoiceCaptureSupported())
   }, [])
 
   useEffect(() => {
     return () => {
-      recognitionRef.current?.stop?.()
+      sessionIdRef.current += 1
+      teardownResources()
     }
   }, [])
 
-  function handleStartListening() {
-    const SpeechRecognition = getSpeechRecognition()
-    if (!SpeechRecognition) {
+  function teardownResources() {
+    const recorder = mediaRecorderRef.current
+    mediaRecorderRef.current = null
+
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.stop()
+    }
+
+    const socket = socketRef.current
+    socketRef.current = null
+
+    if (socket && socket.readyState < WebSocket.CLOSING) {
+      socket.close(1000, 'voice intake stopped')
+    }
+
+    const stream = mediaStreamRef.current
+    mediaStreamRef.current = null
+    stream?.getTracks().forEach((track) => track.stop())
+  }
+
+  function stopListening() {
+    sessionIdRef.current += 1
+    teardownResources()
+    setIsListening(false)
+    setStatusMessage('Ready to capture with Deepgram.')
+    setTranscript((currentTranscript) => finalTranscriptRef.current || currentTranscript)
+  }
+
+  async function handleStartListening() {
+    if (!isVoiceCaptureSupported()) {
       setErrorMessage('Voice capture is not supported in this browser. You can still type notes below.')
       return
     }
 
-    recognitionRef.current?.stop?.()
-
-    const recognition = new SpeechRecognition()
-    recognition.lang = 'en-US'
-    recognition.continuous = true
-    recognition.interimResults = true
-
-    recognition.onstart = () => {
-      setErrorMessage('')
-      setIsListening(true)
+    if (!DEEPGRAM_API_KEY) {
+      setErrorMessage('Missing DEEPGRAM_API_KEY in the frontend environment.')
+      return
     }
 
-    recognition.onresult = (event) => {
-      let nextFinalTranscript = finalTranscriptRef.current
-      let interimTranscript = ''
+    stopListening()
 
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        const chunk = event.results[i][0]?.transcript?.trim()
-        if (!chunk) continue
+    const sessionId = sessionIdRef.current + 1
+    sessionIdRef.current = sessionId
 
-        if (event.results[i].isFinal) {
-          nextFinalTranscript = `${nextFinalTranscript} ${chunk}`.trim()
-        } else {
-          interimTranscript = `${interimTranscript} ${chunk}`.trim()
-        }
+    setErrorMessage('')
+    setStatusMessage('Requesting microphone access...')
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+      if (sessionIdRef.current !== sessionId) {
+        stream.getTracks().forEach((track) => track.stop())
+        return
       }
 
-      finalTranscriptRef.current = nextFinalTranscript
-      setTranscript(`${nextFinalTranscript} ${interimTranscript}`.trim())
-    }
+      mediaStreamRef.current = stream
+      setStatusMessage('Connecting to Deepgram...')
 
-    recognition.onerror = (event) => {
+      const socketUrl = new URL('wss://api.deepgram.com/v1/listen')
+      socketUrl.searchParams.set('model', DEEPGRAM_MODEL)
+      socketUrl.searchParams.set('language', 'en-US')
+      socketUrl.searchParams.set('interim_results', 'true')
+      socketUrl.searchParams.set('punctuate', 'true')
+      socketUrl.searchParams.set('smart_format', 'true')
+      socketUrl.searchParams.set('endpointing', '300')
+      const socket = new WebSocket(socketUrl, ['token', DEEPGRAM_API_KEY])
+      socket.binaryType = 'arraybuffer'
+      socketRef.current = socket
+
+      socket.onopen = () => {
+        if (sessionIdRef.current !== sessionId) {
+          socket.close(1000, 'stale session')
+          return
+        }
+
+        const recorder = new MediaRecorder(stream, getRecorderOptions())
+        mediaRecorderRef.current = recorder
+
+        recorder.ondataavailable = async (event) => {
+          if (!event.data || event.data.size === 0 || socket.readyState !== WebSocket.OPEN) {
+            return
+          }
+
+          const audioBuffer = await event.data.arrayBuffer()
+
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.send(audioBuffer)
+          }
+        }
+
+        recorder.onerror = () => {
+          setErrorMessage('Microphone audio capture failed.')
+          stopListening()
+        }
+
+        recorder.start(MEDIA_RECORDER_TIMESLICE_MS)
+        setIsListening(true)
+        setStatusMessage('Listening with Deepgram. Tap to stop.')
+      }
+
+      socket.onmessage = (event) => {
+        let payload
+
+        try {
+          payload = JSON.parse(event.data)
+        } catch {
+          return
+        }
+
+        if (payload.type !== 'Results') {
+          return
+        }
+
+        const nextTranscript = payload.channel?.alternatives?.[0]?.transcript?.trim()
+
+        if (!nextTranscript) {
+          if (payload.is_final) {
+            setTranscript(finalTranscriptRef.current)
+          }
+          return
+        }
+
+        if (payload.is_final) {
+          finalTranscriptRef.current = appendTranscript(finalTranscriptRef.current, nextTranscript)
+          setTranscript(finalTranscriptRef.current)
+          return
+        }
+
+        setTranscript(combineTranscript(finalTranscriptRef.current, nextTranscript))
+      }
+
+      socket.onerror = () => {
+        if (sessionIdRef.current !== sessionId) return
+
+        setErrorMessage('Deepgram connection failed. Check your API key and network access.')
+        stopListening()
+      }
+
+      socket.onclose = (event) => {
+        if (sessionIdRef.current !== sessionId) return
+
+        teardownResources()
+        setIsListening(false)
+        setTranscript((currentTranscript) => finalTranscriptRef.current || currentTranscript)
+
+        if (!event.wasClean) {
+          setErrorMessage('Deepgram stopped unexpectedly.')
+        }
+
+        setStatusMessage('Ready to capture with Deepgram.')
+      }
+    } catch (error) {
+      teardownResources()
       setIsListening(false)
-      setErrorMessage(event.error === 'not-allowed' ? 'Microphone access was blocked.' : 'Voice capture stopped unexpectedly.')
+      setStatusMessage('Ready to capture with Deepgram.')
+      setErrorMessage(
+        error?.name === 'NotAllowedError' ? 'Microphone access was blocked.' : error?.message || 'Voice capture stopped unexpectedly.',
+      )
     }
-
-    recognition.onend = () => {
-      setIsListening(false)
-      setTranscript((currentTranscript) => finalTranscriptRef.current || currentTranscript)
-    }
-
-    recognitionRef.current = recognition
-    recognition.start()
   }
 
   function handleStopListening() {
-    recognitionRef.current?.stop?.()
+    stopListening()
   }
 
   function handleTranscriptChange(value) {
@@ -85,7 +219,9 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
   }
 
   function handleContinue() {
-    recognitionRef.current?.stop?.()
+    if (isListening) {
+      stopListening()
+    }
     onContinue(transcript.trim())
   }
 
@@ -105,7 +241,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
           </ul>
         </div>
 
-        <div className="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
+          <div className="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
           <div className="flex justify-center py-3">
             <button
               type="button"
@@ -127,7 +263,11 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Captured notes</label>
-              {errorMessage ? <span className="text-xs font-medium text-red-600">{errorMessage}</span> : null}
+              {errorMessage ? (
+                <span className="text-xs font-medium text-red-600">{errorMessage}</span>
+              ) : (
+                <span className="text-xs font-medium text-gray-500">{statusMessage}</span>
+              )}
             </div>
             <textarea
               rows={8}
