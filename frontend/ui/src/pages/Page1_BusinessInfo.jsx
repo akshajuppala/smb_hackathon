@@ -13,6 +13,8 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
   const [reviewsResult, setReviewsResult] = useState(null)
   const [websiteLoading, setWebsiteLoading] = useState(false)
   const [websiteError, setWebsiteError] = useState('')
+  const [naicsLoading, setNaicsLoading] = useState(false)
+  const [naicsError, setNaicsError] = useState('')
 
   useEffect(() => {
     if (data.address?.length > 10) {
@@ -75,6 +77,51 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
 
   function handleChange(field, value) {
     onChange({ ...data, [field]: value })
+  }
+
+  async function handleSuggestNaicsCode() {
+    if (!data.businessName?.trim() || !data.businessDescription?.trim()) {
+      setNaicsError('Enter the business name and description before classifying.')
+      return
+    }
+
+    setNaicsLoading(true)
+    setNaicsError('')
+
+    try {
+      const response = await fetch('/api/naics-classify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          businessName: data.businessName,
+          businessDescription: data.businessDescription,
+          websiteUrl: data.websiteUrl,
+          address: data.address,
+          cuisineType: data.cuisineType,
+          serveAlcohol: data.serveAlcohol,
+          hasCatering: data.hasCatering,
+          hasFoodTruck: data.hasFoodTruck,
+          hasDelivery: data.hasDelivery,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.details || result.error || 'Could not classify NAICS code')
+      }
+
+      onChange({
+        ...data,
+        suggestedNaics: result,
+      })
+    } catch (error) {
+      setNaicsError(error.message || 'Could not classify NAICS code')
+    } finally {
+      setNaicsLoading(false)
+    }
   }
 
   function simulateReviewScrape() {
@@ -242,6 +289,52 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
                 {label}
               </label>
             ))}
+          </div>
+
+          <div className="rounded-2xl border border-blue-200 bg-blue-50/80 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-blue-950">NAICS classification</p>
+                <p className="mt-1 text-xs text-blue-900/80">
+                  Use OpenRouter to suggest one official 2022 NAICS code from the `722` restaurant and food-service leaf codes.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSuggestNaicsCode}
+                disabled={naicsLoading}
+                className="inline-flex items-center justify-center rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {naicsLoading ? 'Classifying...' : 'Suggest NAICS code'}
+              </button>
+            </div>
+
+            {naicsError && (
+              <p className="mt-3 text-xs text-red-700">{naicsError}</p>
+            )}
+
+            {data.suggestedNaics && !naicsError && (
+              <div className="mt-4 rounded-xl border border-blue-200 bg-white p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">Suggested code</p>
+                    <p className="mt-1 text-xl font-bold text-gray-900">
+                      {data.suggestedNaics.code} <span className="text-base font-semibold text-gray-700">{data.suggestedNaics.name}</span>
+                    </p>
+                  </div>
+                  <div className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
+                    Confidence {Math.round((data.suggestedNaics.confidence || 0) * 100)}%
+                  </div>
+                </div>
+
+                <p className="mt-3 text-sm text-gray-700">{data.suggestedNaics.officialScope}</p>
+
+                <div className="mt-3 rounded-lg bg-gray-50 px-3 py-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Model reason</p>
+                  <p className="mt-1 text-sm text-gray-700">{data.suggestedNaics.reason}</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
