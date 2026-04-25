@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 
-export default function VideoUpload({ label, hint, onFile, analysisResult, analyzing }) {
+export default function VideoUpload({ label, hint, onFile, analysisResult, analyzing, onRecordNow }) {
   const [file, setFile] = useState(null)
   const [dragging, setDragging] = useState(false)
   const uploadRef = useRef()
@@ -60,7 +60,14 @@ export default function VideoUpload({ label, hint, onFile, analysisResult, analy
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center pt-1">
               <button
                 type="button"
-                onClick={() => captureRef.current?.click()}
+                onClick={() => {
+                  if (onRecordNow) {
+                    onRecordNow()
+                    return
+                  }
+
+                  captureRef.current?.click()
+                }}
                 className="px-4 py-2.5 bg-gray-900 text-white text-sm rounded-lg font-medium hover:bg-gray-700 transition-colors"
               >
                 📹 Record now

@@ -1,9 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ProgressStepper from './components/ProgressStepper'
+import GuidedCaptureScreen from './components/GuidedCaptureScreen'
 import Page1BusinessInfo from './pages/Page1_BusinessInfo'
 import Page2Exterior from './pages/Page2_Exterior'
 import Page3Interior from './pages/Page3_Interior'
 import Page4Summary from './pages/Page4_Summary'
+
+const HOME_ROUTE = '/'
+const EXTERIOR_RECORD_ROUTE = '/exterior/record'
+
+function getCurrentPath() {
+  return window.location.pathname || HOME_ROUTE
+}
 
 function SubmissionSuccess({ data }) {
   const fireSafetyChecked = Object.values(data.fireSafetyChecked || {}).filter(Boolean).length
@@ -69,68 +77,138 @@ export default function App() {
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
   const [formData, setFormData] = useState({})
+  const [pathname, setPathname] = useState(getCurrentPath)
+  const [pendingExteriorRecording, setPendingExteriorRecording] = useState(null)
+
+  useEffect(() => {
+    function handlePopState() {
+      setPathname(getCurrentPath())
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  function navigate(path) {
+    if (path === pathname) return
+    window.history.pushState({}, '', path)
+    setPathname(path)
+  }
 
   function handleSubmit() {
     console.log('Assessment data:', formData)
     setSubmitted(true)
   }
 
+  function handleFinishExteriorRecording() {
+    const mockRecording = new File(
+      ['demo exterior walkthrough'],
+      'exterior-walkthrough-demo.mp4',
+      { type: 'video/mp4' }
+    )
+
+    setPendingExteriorRecording(mockRecording)
+    setStep(2)
+    navigate(HOME_ROUTE)
+  }
+
   const completion = computeCompletion(formData)
+  const isExteriorRecordRoute = pathname === EXTERIOR_RECORD_ROUTE
+  const pageContent = isExteriorRecordRoute ? (
+    <GuidedCaptureScreen
+      onBack={() => navigate(HOME_ROUTE)}
+      onFinish={handleFinishExteriorRecording}
+    />
+  ) : submitted ? (
+    <SubmissionSuccess data={formData} />
+  ) : step === 1 ? (
+    <Page1BusinessInfo
+      data={formData}
+      onChange={setFormData}
+      onNext={() => setStep(2)}
+    />
+  ) : step === 2 ? (
+    <Page2Exterior
+      data={formData}
+      onChange={setFormData}
+      onNext={() => setStep(3)}
+      onBack={() => setStep(1)}
+      onRecordNow={() => {
+        setStep(2)
+        navigate(EXTERIOR_RECORD_ROUTE)
+      }}
+      pendingRecordedFile={pendingExteriorRecording}
+      onPendingRecordedFileHandled={() => setPendingExteriorRecording(null)}
+    />
+  ) : step === 3 ? (
+    <Page3Interior
+      data={formData}
+      onChange={setFormData}
+      onNext={() => setStep(4)}
+      onBack={() => setStep(2)}
+    />
+  ) : (
+    <Page4Summary
+      data={formData}
+      onChange={setFormData}
+      onBack={() => setStep(3)}
+      onSubmit={handleSubmit}
+    />
+  )
 
   return (
-    <div className="min-h-screen bg-[#faf9f7] py-6 sm:py-10 px-3 sm:px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-3 sm:px-4 py-1.5 mb-3 sm:mb-4">
-            <span className="text-sm">🏢</span>
-            <span className="text-[11px] sm:text-xs font-medium text-gray-600">SMB Restaurant Insurance Assessment</span>
+    <div className="phone-demo-shell">
+      <div className="phone-demo-glow phone-demo-glow-left" />
+      <div className="phone-demo-glow phone-demo-glow-right" />
+
+      <div className="phone-stage">
+        <div className="phone-frame">
+          <div className="phone-button phone-button-volume-up" />
+          <div className="phone-button phone-button-volume-down" />
+          <div className="phone-button phone-button-power" />
+
+          <div className="phone-screen">
+            <div className="phone-statusbar">
+              <span className="phone-status-time">9:41</span>
+              <div className="phone-island" aria-hidden="true" />
+              <div className="phone-status-icons" aria-hidden="true">
+                <span className="phone-signal" />
+                <span className="phone-wifi" />
+                <span className="phone-battery" />
+              </div>
+            </div>
+
+            <div className="phone-content">
+              {isExteriorRecordRoute ? (
+                pageContent
+              ) : (
+                <div className="max-w-2xl mx-auto px-4 pt-4 pb-8">
+                  <div className="text-center mb-6 sm:mb-8">
+                    <div className="inline-flex items-center gap-2 bg-white/90 border border-gray-200 rounded-full px-3 sm:px-4 py-1.5 mb-3 sm:mb-4 shadow-sm">
+                      <span className="text-sm">🏢</span>
+                      <span className="text-[11px] sm:text-xs font-medium text-gray-600">SMB Restaurant Insurance Assessment</span>
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Insurance Readiness Check</h1>
+                    <p className="text-gray-500 text-xs sm:text-sm mt-2 max-w-md mx-auto px-2">
+                      Complete this assessment to give your insurer everything they need for an accurate quote.
+                    </p>
+                  </div>
+
+                  {!submitted && (
+                    <ProgressStepper
+                      currentStep={step}
+                      completion={completion}
+                      onStepClick={setStep}
+                    />
+                  )}
+
+                  <div className="bg-transparent">
+                    {pageContent}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Insurance Readiness Check</h1>
-          <p className="text-gray-500 text-xs sm:text-sm mt-2 max-w-md mx-auto px-2">
-            Complete this assessment to give your insurer everything they need for an accurate quote.
-          </p>
-        </div>
-
-        {!submitted && (
-          <ProgressStepper
-            currentStep={step}
-            completion={completion}
-            onStepClick={setStep}
-          />
-        )}
-
-        <div className="bg-transparent">
-          {submitted ? (
-            <SubmissionSuccess data={formData} />
-          ) : step === 1 ? (
-            <Page1BusinessInfo
-              data={formData}
-              onChange={setFormData}
-              onNext={() => setStep(2)}
-            />
-          ) : step === 2 ? (
-            <Page2Exterior
-              data={formData}
-              onChange={setFormData}
-              onNext={() => setStep(3)}
-              onBack={() => setStep(1)}
-            />
-          ) : step === 3 ? (
-            <Page3Interior
-              data={formData}
-              onChange={setFormData}
-              onNext={() => setStep(4)}
-              onBack={() => setStep(2)}
-            />
-          ) : (
-            <Page4Summary
-              data={formData}
-              onChange={setFormData}
-              onBack={() => setStep(3)}
-              onSubmit={handleSubmit}
-            />
-          )}
         </div>
       </div>
     </div>

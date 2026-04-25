@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import VideoUpload from '../components/VideoUpload'
 import ChecklistSection from '../components/ChecklistSection'
 import { exteriorSecurityChecklist, locationChecklist } from '../data/checklistData'
@@ -12,7 +12,15 @@ const MOCK_CV_RESULTS = [
   { id: 'entrance_clear', label: 'Entrance unobstructed and level', detected: true },
 ]
 
-export default function Page2Exterior({ data, onChange, onNext, onBack }) {
+export default function Page2Exterior({
+  data,
+  onChange,
+  onNext,
+  onBack,
+  onRecordNow,
+  pendingRecordedFile,
+  onPendingRecordedFileHandled,
+}) {
   const [analyzing, setAnalyzing] = useState(false)
   const [cvResults, setCvResults] = useState(null)
 
@@ -35,6 +43,13 @@ export default function Page2Exterior({ data, onChange, onNext, onBack }) {
       })
     }, 3000)
   }
+
+  useEffect(() => {
+    if (!pendingRecordedFile) return
+
+    handleVideoFile(pendingRecordedFile)
+    onPendingRecordedFileHandled?.()
+  }, [pendingRecordedFile, onPendingRecordedFileHandled])
 
   function toggleCheck(id) {
     onChange({
@@ -70,6 +85,7 @@ export default function Page2Exterior({ data, onChange, onNext, onBack }) {
           label="Exterior video walkthrough"
           hint="Walk around your building: entrance, windows, shutters, lighting, parking area, and signage. Aim for 2–5 minutes."
           onFile={handleVideoFile}
+          onRecordNow={onRecordNow}
           analyzing={analyzing}
           analysisResult={cvResults}
         />

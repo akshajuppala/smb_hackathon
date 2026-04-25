@@ -2,7 +2,213 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  background:
+    radial-gradient(circle at top left, rgba(246, 209, 122, 0.28), transparent 32%),
+    radial-gradient(circle at top right, rgba(215, 96, 73, 0.18), transparent 28%),
+    linear-gradient(180deg, #f4efe6 0%, #ece5d8 100%);
+}
+
 body {
-  background-color: #faf9f7;
+  min-height: 100vh;
+  margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: transparent;
+  color: #1f2937;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.phone-demo-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  padding: 20px;
+}
+
+.phone-stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: calc(100vh - 40px);
+  align-items: center;
+  justify-content: center;
+}
+
+.phone-demo-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(16px);
+  opacity: 0.9;
+}
+
+.phone-demo-glow-left {
+  top: 9%;
+  left: -80px;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(236, 130, 70, 0.36), rgba(236, 130, 70, 0));
+}
+
+.phone-demo-glow-right {
+  right: -120px;
+  bottom: 10%;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(46, 116, 122, 0.22), rgba(46, 116, 122, 0));
+}
+
+.phone-frame {
+  position: relative;
+  width: min(100%, 430px);
+  height: min(92vh, 900px);
+  padding: 12px;
+  border-radius: 42px;
+  background:
+    linear-gradient(160deg, #161616 0%, #050505 48%, #1e1e1e 100%);
+  box-shadow:
+    0 40px 70px rgba(73, 47, 28, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.phone-screen {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.96) 12%, #faf9f7 100%);
+}
+
+.phone-statusbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 22px 10px;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.phone-status-time {
+  min-width: 48px;
+}
+
+.phone-island {
+  width: 116px;
+  height: 30px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #1a1a1a 0%, #050505 100%);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.phone-status-icons {
+  display: flex;
+  min-width: 48px;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.phone-signal,
+.phone-wifi,
+.phone-battery {
+  display: inline-block;
+  height: 10px;
+  border-radius: 9999px;
+  background: #111827;
+}
+
+.phone-signal {
+  width: 10px;
+}
+
+.phone-wifi {
+  width: 14px;
+}
+
+.phone-battery {
+  width: 18px;
+}
+
+.phone-content {
+  height: 100%;
+  overflow-y: auto;
+  padding-top: 56px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 114, 128, 0.4) transparent;
+}
+
+.phone-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.phone-content::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.35);
+  border-radius: 9999px;
+}
+
+.phone-button {
+  position: absolute;
+  left: -3px;
+  width: 4px;
+  border-radius: 9999px 0 0 9999px;
+  background: linear-gradient(180deg, #5a5a5a 0%, #2d2d2d 100%);
+}
+
+.phone-button-volume-up {
+  top: 138px;
+  height: 58px;
+}
+
+.phone-button-volume-down {
+  top: 210px;
+  height: 58px;
+}
+
+.phone-button-power {
+  left: auto;
+  right: -3px;
+  top: 184px;
+  height: 78px;
+  border-radius: 0 9999px 9999px 0;
+}
+
+@media (max-width: 640px) {
+  .phone-demo-shell {
+    padding: 12px;
+  }
+
+  .phone-stage {
+    min-height: calc(100vh - 24px);
+  }
+
+  .phone-frame {
+    height: calc(100vh - 24px);
+    border-radius: 34px;
+    padding: 10px;
+  }
+
+  .phone-screen {
+    border-radius: 26px;
+  }
+
+  .phone-island {
+    width: 96px;
+    height: 26px;
+  }
+
+  .phone-statusbar {
+    padding-inline: 18px;
+  }
 }
