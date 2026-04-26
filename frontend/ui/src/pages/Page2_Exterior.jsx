@@ -22,6 +22,7 @@ export default function Page2Exterior({
 }) {
   const [analyzing, setAnalyzing] = useState(false)
   const [cvResults, setCvResults] = useState(null)
+  const hasExteriorAssessment = Boolean(data.exteriorVideo)
 
   function handleVideoFile(file) {
     onChange({ ...data, exteriorVideo: file })
@@ -94,7 +95,7 @@ export default function Page2Exterior({
           </button>
           {data.exteriorVideo && !analyzing && (
             <p className="mt-3 text-xs text-green-700">
-              Recorded walkthrough attached: {data.exteriorVideo.name}
+              Recorded walkthrough uploaded: {data.exteriorVideo.name}
             </p>
           )}
         </div>
@@ -142,66 +143,70 @@ export default function Page2Exterior({
         )}
       </div>
 
-      {/* Exterior Security Checklist */}
-      <ChecklistSection
-        icon="🔒"
-        title="Exterior security"
-        impact="high"
-        items={exteriorSecurityChecklist}
-        checked={data.exteriorChecked || {}}
-        onToggle={toggleCheck}
-      >
-        <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-            Additional security details not visible in the video
-          </label>
-          <textarea
-            rows={3}
-            placeholder="e.g. We have a monitored alarm system (ADT), bollards at the entrance, reinforced door frames, keypad entry after hours..."
-            value={data.exteriorNotes || ''}
-            onChange={(e) => onChange({ ...data, exteriorNotes: e.target.value })}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none"
-          />
-        </div>
-      </ChecklistSection>
+      {hasExteriorAssessment && (
+        <>
+          {/* Exterior Security Checklist */}
+          <ChecklistSection
+            icon="🔒"
+            title="Exterior security"
+            impact="high"
+            items={exteriorSecurityChecklist}
+            checked={data.exteriorChecked || {}}
+            onToggle={toggleCheck}
+          >
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Additional security details not visible in the video
+              </label>
+              <textarea
+                rows={3}
+                placeholder="e.g. We have a monitored alarm system (ADT), bollards at the entrance, reinforced door frames, keypad entry after hours..."
+                value={data.exteriorNotes || ''}
+                onChange={(e) => onChange({ ...data, exteriorNotes: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none"
+              />
+            </div>
+          </ChecklistSection>
 
-      {/* Location & Neighborhood Checklist */}
-      <ChecklistSection
-        icon="📍"
-        title="Location & neighborhood"
-        impact="evaluated"
-        items={locationChecklist}
-        checked={data.locationChecked || {}}
-        onToggle={toggleLocationCheck}
-      >
-        <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-            Additional location notes
-          </label>
-          <textarea
-            rows={2}
-            placeholder="e.g. We are 0.3 miles from Station 12. We verified FEMA flood map Zone X. ISO Crime Score: 4."
-            value={data.locationNotes || ''}
-            onChange={(e) => onChange({ ...data, locationNotes: e.target.value })}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none"
-          />
-        </div>
-      </ChecklistSection>
+          {/* Location & Neighborhood Checklist */}
+          <ChecklistSection
+            icon="📍"
+            title="Location & neighborhood"
+            impact="evaluated"
+            items={locationChecklist}
+            checked={data.locationChecked || {}}
+            onToggle={toggleLocationCheck}
+          >
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Additional location notes
+              </label>
+              <textarea
+                rows={2}
+                placeholder="e.g. We are 0.3 miles from Station 12. We verified FEMA flood map Zone X. ISO Crime Score: 4."
+                value={data.locationNotes || ''}
+                onChange={(e) => onChange({ ...data, locationNotes: e.target.value })}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none"
+              />
+            </div>
+          </ChecklistSection>
 
-      <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
-        <button
-          onClick={onBack}
-          className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-50 transition-colors"
-        >
-          ← Back
-        </button>
-        <button
-          onClick={onNext}
-          className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-900 text-white text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-700 transition-colors"
-        >
-          Continue to Interior →
-        </button>
-      </div>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+            <button
+              onClick={onBack}
+              className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+            >
+              ← Back
+            </button>
+            <button
+              onClick={onNext}
+              className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-900 text-white text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-700 transition-colors"
+            >
+              Continue to Interior →
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
