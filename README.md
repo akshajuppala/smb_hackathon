@@ -3,27 +3,27 @@ our name: Simply Covered
 
 ## Framework Viewer
 
-The framework viewer now lives entirely under [`scores/`](/Users/Focus/conductor/workspaces/smb_hackathon/seville-v1/scores).
+The framework viewer is now part of the main frontend app at `/scoring-framework`.
 
 ### Files
 
-- `scores/insurance_readiness_framework.yaml`: canonical source of truth
-- `scores/server.ts`: simple TypeScript server
-- `scores/public/`: frontend assets
+- `frontend/ui/src/data/insuranceReadinessFramework.yaml`: canonical source of truth
+- `frontend/ui/src/pages/PageScoringFramework.jsx`: framework route UI
+- `frontend/ui/server/index.mjs`: scoring API and PDF export endpoints
 
 ### Run
 
-From `scores/`:
+From `frontend/ui/`:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Then open `http://127.0.0.1:4173`.
+Then open `http://127.0.0.1:5173/scoring-framework`.
 
 If PDF export needs a local browser binary:
 
 ```bash
-npm run install:pdf-browser
+npx playwright install chromium
 ```

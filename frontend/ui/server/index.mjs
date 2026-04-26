@@ -1,8 +1,10 @@
 import http from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
-import { mkdir, writeFile, appendFile } from 'node:fs/promises'
+import { mkdir, writeFile, appendFile, readFile } from 'node:fs/promises'
 import dotenv from 'dotenv'
+import yaml from 'js-yaml'
+import { chromium } from 'playwright'
 import { NAICS_722_LEAF_CODES, NAICS_722_LEAF_CODE_MAP } from '../src/data/naics722LeafCodes.js'
 import { buildVoiceBusinessPrefillPrompt } from '../src/utils/voiceBusinessPrefill.js'
 
@@ -17,6 +19,9 @@ const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-3.1-pro-
 const TRACE_DIR = path.resolve(process.cwd(), '..', '..', '.context')
 const TRACE_LATEST_FILE = path.join(TRACE_DIR, 'voice-prefill-latest.json')
 const TRACE_HISTORY_FILE = path.join(TRACE_DIR, 'voice-prefill-traces.ndjson')
+const SCORING_FRAMEWORK_PATH = path.resolve(process.cwd(), 'src/data/insuranceReadinessFramework.yaml')
+const SCORING_FRAMEWORK_ROUTE = '/scoring-framework'
+const DEFAULT_FRONTEND_ORIGIN = process.env.SCORING_FRAMEWORK_APP_ORIGIN || 'http://127.0.0.1:5173'
 
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
@@ -307,6 +312,162 @@ async function fetchPlaceWebsite(searchParams) {
   }
 }
 
+function firstNonEmpty(...values) {
+  return values.find((value) => typeof value === 'string' && value.trim())?.trim() || ''
+}
+
+function formatResolvedAddress(address) {
+  const street = [address.house_number, address.road].filter(Boolean).join(' ').trim()
+  const locality = firstNonEmpty(address.city, address.town, address.village, address.hamlet, address.municipality)
+  const stateCode = address['ISO3166-2-lvl4']?.split('-')?.[1] || ''
+  const state = stateCode || address.state_code || address.state || ''
+  const postalCode = address.postcode || ''
+
+  return [street, locality, [state, postalCode].filter(Boolean).join(' ')].filter(Boolean).join(', ')
+}
+
+function dedupeAreas(values) {
+  const seen = new Set()
+
+  return values.filter((value) => {
+    if (!value) return false
+    const normalized = value.toLowerCase()
+    if (seen.has(normalized)) return false
+    seen.add(normalized)
+    return true
+  })
+}
+
+async function resolveNeighborhood(searchParams) {
+  const addressQuery = searchParams.get('address')?.trim()
+
+  if (!addressQuery) {
+    throw new Error('Missing address')
+  }
+
+  const geocodeUrl = new URL('https://nominatim.openstreetmap.org/search')
+  geocodeUrl.searchParams.set('format', 'jsonv2')
+  geocodeUrl.searchParams.set('addressdetails', '1')
+  geocodeUrl.searchParams.set('limit', '1')
+  geocodeUrl.searchParams.set('q', addressQuery)
+
+  const geocodeResponse = await fetch(geocodeUrl, {
+    headers: {
+      'User-Agent': 'bozeman-v2-address-lookup/1.0',
+      Accept: 'application/json',
+    },
+  })
+
+  if (!geocodeResponse.ok) {
+    const errorText = await geocodeResponse.text()
+    throw new Error(`Address lookup failed: ${errorText}`)
+  }
+
+  const payload = await geocodeResponse.json()
+  const match = payload?.[0]
+
+  if (!match?.address) {
+    throw new Error('Address lookup returned no results')
+  }
+
+  const formattedAddress = formatResolvedAddress(match.address)
+  const areaCandidates = dedupeAreas([
+    match.address.neighbourhood,
+    match.address.quarter,
+    match.address.suburb,
+    match.address.city_district,
+  ])
+
+  return {
+    formattedAddress: formattedAddress || match.display_name || addressQuery,
+    postalCode: match.address.postcode || '',
+    neighborhood: areaCandidates[0] || '',
+    secondaryArea: areaCandidates[1] || '',
+    latitude: match.lat || '',
+    longitude: match.lon || '',
+  }
+}
+
+async function readScoringFramework() {
+  const document = await readFile(SCORING_FRAMEWORK_PATH, 'utf8')
+  return yaml.load(document)
+}
+
+function getScoringFrameworkOrigin(request) {
+  const referer = request.headers.referer
+
+  if (referer) {
+    try {
+      return new URL(referer).origin
+    } catch {
+      return DEFAULT_FRONTEND_ORIGIN
+    }
+  }
+
+  return DEFAULT_FRONTEND_ORIGIN
+}
+
+async function renderScoringFrameworkPdf(url, request) {
+  const pageUrl = new URL(SCORING_FRAMEWORK_ROUTE, getScoringFrameworkOrigin(request))
+  const search = url.searchParams.get('search')
+  const pillar = url.searchParams.get('pillar')
+
+  pageUrl.searchParams.set('pdf', '1')
+
+  if (search) {
+    pageUrl.searchParams.set('search', search)
+  }
+
+  if (pillar) {
+    pageUrl.searchParams.set('pillar', pillar)
+  }
+
+  const browser = await launchBrowser()
+  const page = await browser.newPage({ viewport: { width: 1100, height: 1500 } })
+
+  try {
+    await page.emulateMedia({ media: 'screen' })
+    await page.goto(pageUrl.toString(), { waitUntil: 'networkidle' })
+    await page.waitForFunction(() => document.body.dataset.ready === 'true')
+
+    const pageScale = await getPdfScale(page)
+
+    return await page.pdf({
+      format: 'A4',
+      landscape: false,
+      scale: pageScale,
+      printBackground: true,
+      preferCSSPageSize: false,
+      margin: {
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm',
+      },
+    })
+  } finally {
+    await browser.close()
+  }
+}
+
+async function getPdfScale(page) {
+  const pageWidth = await page.evaluate(() => document.documentElement.scrollWidth)
+  const a4PortraitWidthInches = 8.27
+  const horizontalMarginInches = 20 / 25.4
+  const printableWidthPx = (a4PortraitWidthInches - horizontalMarginInches) * 96
+  const scale = printableWidthPx / pageWidth
+
+  return Math.max(0.1, Math.min(1, scale))
+}
+
+async function launchBrowser() {
+  try {
+    return await chromium.launch({ channel: 'chrome' })
+  } catch {
+    return chromium.launch()
+  }
+}
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url || '/', 'http://127.0.0.1')
 
@@ -335,6 +496,46 @@ const server = http.createServer(async (request, response) => {
     } catch (error) {
       sendJson(response, /Missing businessName or address|Missing GOOGLE_PLACES_API_KEY/.test(error.message) ? 400 : 500, {
         error: error.message || 'Lookup request failed',
+      })
+    }
+    return
+  }
+
+  if (url.pathname === '/api/resolve-neighborhood' && request.method === 'GET') {
+    try {
+      const result = await resolveNeighborhood(url.searchParams)
+      sendJson(response, 200, result)
+    } catch (error) {
+      sendJson(response, /Missing address|no results/i.test(error.message) ? 400 : 500, {
+        error: error.message || 'Neighborhood lookup failed',
+      })
+    }
+    return
+  }
+
+  if (url.pathname === '/api/scoring-framework' && request.method === 'GET') {
+    try {
+      const framework = await readScoringFramework()
+      sendJson(response, 200, framework)
+    } catch (error) {
+      sendJson(response, 500, {
+        error: error instanceof Error ? error.message : 'Failed to load scoring framework',
+      })
+    }
+    return
+  }
+
+  if (url.pathname === '/api/scoring-framework/pdf' && request.method === 'GET') {
+    try {
+      const pdf = await renderScoringFrameworkPdf(url, request)
+      response.writeHead(200, {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="insurance-readiness-framework.pdf"',
+      })
+      response.end(pdf)
+    } catch (error) {
+      sendJson(response, 500, {
+        error: error instanceof Error ? error.message : 'Failed to render scoring PDF',
       })
     }
     return
