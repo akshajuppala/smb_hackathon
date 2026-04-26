@@ -264,8 +264,8 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
     setTimeout(() => {
       setReviewsLoading(false)
       setReviewsResult({
-        total: 142,
-        rating: 4.1,
+        total: 403,
+        rating: 4.6,
         slipFallMentions: 2,
         excerpts: [
           { text: '"Careful on the wet floor near the entrance — no mat during rain."', sentiment: 'negative', date: '3 months ago' },
