@@ -309,6 +309,82 @@ async function fetchPlaceWebsite(searchParams) {
   }
 }
 
+function firstNonEmpty(...values) {
+  return values.find((value) => typeof value === 'string' && value.trim())?.trim() || ''
+}
+
+function formatResolvedAddress(address) {
+  const street = [address.house_number, address.road].filter(Boolean).join(' ').trim()
+  const locality = firstNonEmpty(address.city, address.town, address.village, address.hamlet, address.municipality)
+  const stateCode = address['ISO3166-2-lvl4']?.split('-')?.[1] || ''
+  const state = stateCode || address.state_code || address.state || ''
+  const postalCode = address.postcode || ''
+
+  return [street, locality, [state, postalCode].filter(Boolean).join(' ')].filter(Boolean).join(', ')
+}
+
+function dedupeAreas(values) {
+  const seen = new Set()
+
+  return values.filter((value) => {
+    if (!value) return false
+    const normalized = value.toLowerCase()
+    if (seen.has(normalized)) return false
+    seen.add(normalized)
+    return true
+  })
+}
+
+async function resolveNeighborhood(searchParams) {
+  const addressQuery = searchParams.get('address')?.trim()
+
+  if (!addressQuery) {
+    throw new Error('Missing address')
+  }
+
+  const geocodeUrl = new URL('https://nominatim.openstreetmap.org/search')
+  geocodeUrl.searchParams.set('format', 'jsonv2')
+  geocodeUrl.searchParams.set('addressdetails', '1')
+  geocodeUrl.searchParams.set('limit', '1')
+  geocodeUrl.searchParams.set('q', addressQuery)
+
+  const geocodeResponse = await fetch(geocodeUrl, {
+    headers: {
+      'User-Agent': 'bozeman-v2-address-lookup/1.0',
+      Accept: 'application/json',
+    },
+  })
+
+  if (!geocodeResponse.ok) {
+    const errorText = await geocodeResponse.text()
+    throw new Error(`Address lookup failed: ${errorText}`)
+  }
+
+  const payload = await geocodeResponse.json()
+  const match = payload?.[0]
+
+  if (!match?.address) {
+    throw new Error('Address lookup returned no results')
+  }
+
+  const formattedAddress = formatResolvedAddress(match.address)
+  const areaCandidates = dedupeAreas([
+    match.address.neighbourhood,
+    match.address.quarter,
+    match.address.suburb,
+    match.address.city_district,
+  ])
+
+  return {
+    formattedAddress: formattedAddress || match.display_name || addressQuery,
+    postalCode: match.address.postcode || '',
+    neighborhood: areaCandidates[0] || '',
+    secondaryArea: areaCandidates[1] || '',
+    latitude: match.lat || '',
+    longitude: match.lon || '',
+  }
+}
+
 async function readScoringFramework() {
   const document = await readFile(SCORING_FRAMEWORK_PATH, 'utf8')
   return yaml.load(document)
@@ -417,6 +493,18 @@ const server = http.createServer(async (request, response) => {
     } catch (error) {
       sendJson(response, /Missing businessName or address|Missing GOOGLE_PLACES_API_KEY/.test(error.message) ? 400 : 500, {
         error: error.message || 'Lookup request failed',
+      })
+    }
+    return
+  }
+
+  if (url.pathname === '/api/resolve-neighborhood' && request.method === 'GET') {
+    try {
+      const result = await resolveNeighborhood(url.searchParams)
+      sendJson(response, 200, result)
+    } catch (error) {
+      sendJson(response, /Missing address|no results/i.test(error.message) ? 400 : 500, {
+        error: error.message || 'Neighborhood lookup failed',
       })
     }
     return
