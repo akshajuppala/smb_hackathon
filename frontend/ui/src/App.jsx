@@ -172,6 +172,14 @@ export default function App() {
   const isExteriorRecordRoute = pathname === EXTERIOR_RECORD_ROUTE
   const isInteriorRecordRoute = pathname === INTERIOR_RECORD_ROUTE
   const isRecordRoute = isExteriorRecordRoute || isInteriorRecordRoute
+  const isSuccessScreen = currentScreen === SCREENS.success
+  const shouldHideWelcomeHeader =
+    currentScreen === SCREENS.voiceIntake ||
+    currentScreen === SCREENS.businessInfo ||
+    currentScreen === SCREENS.exterior ||
+    currentScreen === SCREENS.interior ||
+    currentScreen === SCREENS.summary ||
+    currentScreen === SCREENS.success
 
   if (isScoringFrameworkRoute) {
     return <PageScoringFramework onBack={() => navigate(HOME_ROUTE)} />
@@ -284,27 +292,25 @@ export default function App() {
                 pageContent
               ) : (
                 <div className="max-w-2xl mx-auto px-4 pt-4 pb-8">
-                  <div className="mb-6 sm:mb-8">
-                    <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4">
-                      <div className="flex items-center gap-2 text-left">
-                        <span className="text-sm">🏢</span>
-                        <span className="brand-wordmark text-xl sm:text-2xl text-slate-700">Simply Covered</span>
+                  {isSuccessScreen ? null : (
+                    <div className="mb-6 sm:mb-8">
+                      <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4">
+                        <div className="flex items-center gap-2 text-left">
+                          <span className="text-sm">🏢</span>
+                          <span className="brand-wordmark text-xl sm:text-2xl text-slate-700">Simply Covered</span>
+                        </div>
+                        <LanguageToggle />
                       </div>
-                      <LanguageToggle />
+                      {shouldHideWelcomeHeader ? null : (
+                        <h1 className="mt-8 max-w-xl text-center text-gray-900 sm:mt-10 mx-auto">
+                          <span className="block text-[2rem] font-extrabold leading-none sm:text-[2.4rem]">Good Evening!</span>
+                          <span className="mt-2 block text-lg font-semibold leading-snug text-slate-700 sm:text-[1.35rem]">
+                            Ready to start your Insurance Readiness Check?
+                          </span>
+                        </h1>
+                      )}
                     </div>
-                    {currentScreen === SCREENS.voiceIntake ||
-                    currentScreen === SCREENS.businessInfo ||
-                    currentScreen === SCREENS.exterior ||
-                    currentScreen === SCREENS.interior ||
-                    currentScreen === SCREENS.summary ? null : (
-                      <h1 className="mt-8 max-w-xl text-center text-gray-900 sm:mt-10 mx-auto">
-                        <span className="block text-[2rem] font-extrabold leading-none sm:text-[2.4rem]">Good Evening!</span>
-                        <span className="mt-2 block text-lg font-semibold leading-snug text-slate-700 sm:text-[1.35rem]">
-                          Ready to start your Insurance Readiness Check?
-                        </span>
-                      </h1>
-                    )}
-                  </div>
+                  )}
 
                   {headerStep ? (
                     <ProgressStepper

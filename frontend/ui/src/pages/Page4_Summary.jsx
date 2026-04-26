@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import ChecklistSection from '../components/ChecklistSection'
 import {
   fireSafetyChecklist,
@@ -7,11 +8,21 @@ import {
 } from '../data/checklistData'
 
 export default function Page4Summary({ data, onChange, onBack, onSubmit }) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   function toggle(field, id) {
     onChange({
       ...data,
       [field]: { ...(data[field] || {}), [id]: !data[field]?.[id] },
     })
+  }
+
+  async function handleSubmit() {
+    if (isSubmitting) return
+
+    setIsSubmitting(true)
+    await new Promise((resolve) => window.setTimeout(resolve, 1500))
+    onSubmit()
   }
 
   const fireChecked = data.fireSafetyChecked || {}
@@ -96,15 +107,29 @@ export default function Page4Summary({ data, onChange, onBack, onSubmit }) {
       <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
         <button
           onClick={onBack}
+          disabled={isSubmitting}
           className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-50 transition-colors"
         >
           ← Back
         </button>
         <button
-          onClick={onSubmit}
-          className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-900 text-white text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-700 transition-colors"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-900 text-white text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-700 transition-colors disabled:cursor-not-allowed disabled:bg-gray-700"
         >
-          Submit Assessment ✓
+          <span className="inline-flex items-center gap-2">
+            {isSubmitting ? (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                />
+                Emailing your assessment...
+              </>
+            ) : (
+              'email me my assessment'
+            )}
+          </span>
         </button>
       </div>
     </div>
