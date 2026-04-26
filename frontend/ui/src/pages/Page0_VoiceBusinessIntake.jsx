@@ -36,7 +36,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
-  const [statusMessage, setStatusMessage] = useState('Ready to capture with Deepgram.')
+  const [statusMessage, setStatusMessage] = useState('')
 
   useEffect(() => {
     setIsSupported(isVoiceCaptureSupported())
@@ -73,13 +73,13 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
     sessionIdRef.current += 1
     teardownResources()
     setIsListening(false)
-    setStatusMessage('Ready to capture with Deepgram.')
+    setStatusMessage('')
     setTranscript((currentTranscript) => finalTranscriptRef.current || currentTranscript)
   }
 
   async function handleStartListening() {
     if (!isVoiceCaptureSupported()) {
-      setErrorMessage('Voice capture is not supported in this browser. You can still type notes below.')
+      setErrorMessage('Voice capture is not supported in this browser.')
       return
     }
 
@@ -146,7 +146,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
 
         recorder.start(MEDIA_RECORDER_TIMESLICE_MS)
         setIsListening(true)
-        setStatusMessage('Listening with Deepgram. Tap to stop.')
+        setStatusMessage('Listening. Tap to stop.')
       }
 
       socket.onmessage = (event) => {
@@ -198,12 +198,12 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
           setErrorMessage('Deepgram stopped unexpectedly.')
         }
 
-        setStatusMessage('Ready to capture with Deepgram.')
+        setStatusMessage('')
       }
     } catch (error) {
       teardownResources()
       setIsListening(false)
-      setStatusMessage('Ready to capture with Deepgram.')
+      setStatusMessage('')
       setErrorMessage(
         error?.name === 'NotAllowedError' ? 'Microphone access was blocked.' : error?.message || 'Voice capture stopped unexpectedly.',
       )
@@ -212,11 +212,6 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
 
   function handleStopListening() {
     stopListening()
-  }
-
-  function handleTranscriptChange(value) {
-    finalTranscriptRef.current = value
-    setTranscript(value)
   }
 
   async function handleContinue() {
@@ -256,7 +251,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
         </div>
 
           <div className="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
-          <div className="flex justify-center py-3">
+          <div className="flex justify-center py-3 pb-8">
             <button
               type="button"
               onClick={isListening ? handleStopListening : handleStartListening}
@@ -280,17 +275,20 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
               <label className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Captured notes</label>
               {errorMessage ? (
                 <span className="text-xs font-medium text-red-600">{errorMessage}</span>
-              ) : (
+              ) : statusMessage ? (
                 <span className="text-xs font-medium text-gray-500">{statusMessage}</span>
+              ) : null}
+            </div>
+            <div
+              aria-live="polite"
+              className="min-h-[7.5rem] w-full rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm leading-6 text-gray-800"
+            >
+              {transcript ? (
+                <p className="whitespace-pre-wrap">{transcript}</p>
+              ) : (
+                <p className="text-gray-400">Your transcript will appear here as you talk.</p>
               )}
             </div>
-            <textarea
-              rows={8}
-              value={transcript}
-              onChange={(event) => handleTranscriptChange(event.target.value)}
-              placeholder="Your transcript will appear here. You can edit it before continuing."
-              className="w-full rounded-3xl border border-gray-200 bg-white px-4 py-4 text-sm text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-200"
-            />
           </div>
         </div>
       </div>
@@ -299,10 +297,10 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
         <button
           type="button"
           onClick={handleContinue}
-          disabled={!transcript.trim() || isSubmitting}
+          disabled={isSubmitting}
           className="w-full rounded-2xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
         >
-          {isSubmitting ? 'Prefilling business info...' : 'Done and prefill business info'}
+          {isSubmitting ? 'Prefilling business info...' : 'Next step'}
         </button>
       </div>
     </div>

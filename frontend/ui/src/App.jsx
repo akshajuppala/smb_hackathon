@@ -48,6 +48,31 @@ const ASSESSMENT_TO_SCREEN = {
   interior: SCREENS.interior,
 }
 
+function LanguageToggle() {
+  return (
+    <div
+      className="inline-flex items-center rounded-full border border-amber-200 bg-white/90 p-0.5 shadow-sm"
+      aria-label="Language toggle"
+      role="group"
+    >
+      <button
+        type="button"
+        className="rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white"
+        aria-pressed="true"
+      >
+        EN
+      </button>
+      <button
+        type="button"
+        className="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600"
+        aria-pressed="false"
+      >
+        ESP
+      </button>
+    </div>
+  )
+}
+
 function getCurrentPath() {
   return window.location.pathname || HOME_ROUTE
 }
@@ -253,9 +278,12 @@ export default function App() {
               ) : (
                 <div className="max-w-2xl mx-auto px-4 pt-4 pb-8">
                   <div className="mb-6 sm:mb-8">
-                    <div className="mb-3 flex items-center gap-2 text-left sm:mb-4">
-                      <span className="text-sm">🏢</span>
-                      <span className="brand-wordmark text-xl sm:text-2xl text-slate-700">Simply Covered</span>
+                    <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4">
+                      <div className="flex items-center gap-2 text-left">
+                        <span className="text-sm">🏢</span>
+                        <span className="brand-wordmark text-xl sm:text-2xl text-slate-700">Simply Covered</span>
+                      </div>
+                      <LanguageToggle />
                     </div>
                     {currentScreen === SCREENS.voiceIntake || currentScreen === SCREENS.businessInfo ? null : (
                       <h1 className="mt-8 max-w-xl text-center text-gray-900 sm:mt-10 mx-auto">
