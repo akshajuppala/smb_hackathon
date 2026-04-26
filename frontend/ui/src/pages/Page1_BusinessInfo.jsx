@@ -10,6 +10,7 @@ const RISK_STYLES = {
 
 export default function Page1BusinessInfo({ data, onChange, onNext }) {
   const [riskResult, setRiskResult] = useState(null)
+  const [addressLookupError, setAddressLookupError] = useState('')
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [reviewsResult, setReviewsResult] = useState(null)
   const [websiteLoading, setWebsiteLoading] = useState(false)
@@ -19,11 +20,54 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
 
   useEffect(() => {
     if (data.address?.length > 10) {
-      const result = assessNeighborhoodRisk(data.address)
+      const riskTarget = [data.resolvedNeighborhood, data.resolvedSecondaryArea, data.address].filter(Boolean).join(', ')
+      const result = assessNeighborhoodRisk(riskTarget)
       setRiskResult(result)
     } else {
       setRiskResult(null)
     }
+  }, [data.address, data.resolvedNeighborhood, data.resolvedSecondaryArea])
+
+  useEffect(() => {
+    const address = data.address?.trim()
+
+    if (!address || address.length < 8) {
+      setAddressLookupError('')
+      return
+    }
+
+    if (data.addressLookupQuery === address) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(async () => {
+      setAddressLookupError('')
+
+      try {
+        const params = new URLSearchParams({ address })
+        const response = await fetch(`/api/resolve-neighborhood?${params.toString()}`)
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(result.details || result.error || 'Address lookup failed')
+        }
+
+        const nextData = {
+          ...data,
+          address: result.formattedAddress || data.address,
+          postalCode: result.postalCode || '',
+          resolvedNeighborhood: result.neighborhood || '',
+          resolvedSecondaryArea: result.secondaryArea || '',
+          addressLookupQuery: result.formattedAddress || address,
+        }
+
+        onChange(nextData)
+      } catch (error) {
+        setAddressLookupError(error.message || 'Could not complete the address.')
+      }
+    }, 700)
+
+    return () => window.clearTimeout(timeoutId)
   }, [data.address])
 
   useEffect(() => {
@@ -315,11 +359,22 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
                     <p className="font-semibold text-sm">{RISK_STYLES[riskResult.level].title}</p>
                     {riskResult.neighborhood ? (
                       <p className="text-xs mt-1">
-                        Address matches <strong>{riskResult.neighborhood}</strong> in {riskResult.city}, {riskResult.state} — a known high-risk area for insurance purposes. Expect higher property and liability premiums. Document all security measures carefully.
+                        {data.resolvedNeighborhood ? (
+                          <>
+                            Address resolves to <strong>{data.resolvedNeighborhood}</strong>
+                            {data.resolvedSecondaryArea ? <> near <strong>{data.resolvedSecondaryArea}</strong></> : null}
+                            . This location also matches <strong>{riskResult.neighborhood}</strong> in {riskResult.city}, {riskResult.state} as a known high-risk area for insurance purposes. Expect higher property and liability premiums. Document all security measures carefully.
+                          </>
+                        ) : (
+                          <>
+                            Address matches <strong>{riskResult.neighborhood}</strong> in {riskResult.city}, {riskResult.state} — a known high-risk area for insurance purposes. Expect higher property and liability premiums. Document all security measures carefully.
+                          </>
+                        )}
                       </p>
                     ) : (
                       <p className="text-xs mt-1">No high-risk neighborhood flags detected for this address. This does not replace a full ISO crime score lookup by your insurer.</p>
                     )}
+                    {addressLookupError && <p className="text-xs mt-2 text-orange-700">{addressLookupError}</p>}
                   </div>
                 </div>
               </div>
