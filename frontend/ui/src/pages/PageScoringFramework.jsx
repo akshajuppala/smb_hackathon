@@ -1,66 +1,16 @@
 import { Fragment, useEffect, useState } from 'react'
-import { scoringEvidenceGuidance } from '../data/scoringEvidenceGuidance'
+import { scoringFrameworkRestaurantProfile } from '../data/scoringFrameworkRestaurantProfile'
 import './scoringFramework.css'
 
-const ALL_PILLARS = 'all'
-
-function getInitialFilters() {
+function getInitialViewState() {
   const params = new URLSearchParams(window.location.search)
   return {
-    searchTerm: params.get('search')?.trim().toLowerCase() || '',
-    pillarId: params.get('pillar') || ALL_PILLARS,
     isPdfMode: params.get('pdf') === '1',
   }
 }
 
 function sum(values) {
   return values.reduce((total, value) => total + value, 0)
-}
-
-function matchesFilters(row, searchTerm, pillarId) {
-  const matchesPillar = pillarId === ALL_PILLARS || row.pillarId === pillarId
-  const searchableText = JSON.stringify(row).toLowerCase()
-  const matchesSearch = !searchTerm || searchableText.includes(searchTerm)
-
-  return matchesPillar && matchesSearch
-}
-
-function buildPdfHref(searchTerm, pillarId) {
-  const url = new URL('/api/scoring-framework/pdf', window.location.origin)
-
-  if (searchTerm) {
-    url.searchParams.set('search', searchTerm)
-  }
-
-  if (pillarId !== ALL_PILLARS) {
-    url.searchParams.set('pillar', pillarId)
-  }
-
-  return url.toString()
-}
-
-function syncUrl(searchTerm, pillarId, isPdfMode) {
-  const url = new URL(window.location.href)
-
-  if (searchTerm) {
-    url.searchParams.set('search', searchTerm)
-  } else {
-    url.searchParams.delete('search')
-  }
-
-  if (pillarId !== ALL_PILLARS) {
-    url.searchParams.set('pillar', pillarId)
-  } else {
-    url.searchParams.delete('pillar')
-  }
-
-  if (isPdfMode) {
-    url.searchParams.set('pdf', '1')
-  } else {
-    url.searchParams.delete('pdf')
-  }
-
-  window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
 }
 
 function getFactorRows(framework) {
@@ -84,55 +34,28 @@ function getBonusRows(framework) {
   )
 }
 
-function EvidenceBadges({ sources }) {
+function findGradeBand(gradeBands, coreScore) {
   return (
-    <div className="scoring-framework-evidence-list">
-      {sources.map((source) => {
-        const guidance =
-          scoringEvidenceGuidance[source] ||
-          'Gather from the named source and upload a dated, readable copy.'
-
-        return (
-          <span
-            key={source}
-            className="scoring-framework-evidence-badge"
-            tabIndex={0}
-            title={guidance}
-            data-tooltip={guidance}
-          >
-            {source}
-          </span>
-        )
-      })}
-    </div>
+    gradeBands.find((band) => coreScore >= band.min_core_score && coreScore <= band.max_core_score) ||
+    gradeBands[gradeBands.length - 1]
   )
 }
 
-function WhyMattersBadge({ reason }) {
-  if (!reason) {
-    return null
-  }
+function getScoreClass(score, max) {
+  if (score === max) return 'scoring-framework-score-pill-strong'
+  if (score === 0) return 'scoring-framework-score-pill-weak'
+  return 'scoring-framework-score-pill-mid'
+}
 
-  return (
-    <span
-      className="scoring-framework-context-badge"
-      tabIndex={0}
-      title={reason}
-      data-tooltip={reason}
-      aria-label={`Why this matters: ${reason}`}
-    >
-      Why this matters
-    </span>
-  )
+function buildPdfHref() {
+  return new URL('/api/scoring-framework/pdf', window.location.origin).toString()
 }
 
 export default function PageScoringFramework({ onBack }) {
-  const initialFilters = getInitialFilters()
+  const initialViewState = getInitialViewState()
   const [framework, setFramework] = useState(null)
-  const [searchTerm, setSearchTerm] = useState(initialFilters.searchTerm)
-  const [pillarId, setPillarId] = useState(initialFilters.pillarId)
-  const [isPdfMode] = useState(initialFilters.isPdfMode)
   const [error, setError] = useState('')
+  const [isPdfMode] = useState(initialViewState.isPdfMode)
 
   useEffect(() => {
     let isCancelled = false
@@ -174,12 +97,8 @@ export default function PageScoringFramework({ onBack }) {
       return
     }
 
-    if (framework) {
-      syncUrl(searchTerm, pillarId, isPdfMode)
-    }
-
     document.body.dataset.ready = 'true'
-  }, [framework, error, searchTerm, pillarId, isPdfMode])
+  }, [framework, error])
 
   if (error) {
     return (
@@ -198,30 +117,59 @@ export default function PageScoringFramework({ onBack }) {
       <main className="scoring-framework-loading">
         <section className="scoring-framework-message">
           <h1>Loading scoring framework</h1>
-          <p>Fetching the insurance readiness YAML from the frontend server.</p>
+          <p>Preparing the restaurant submission from the framework data.</p>
         </section>
       </main>
     )
   }
 
-  const coreTotal = sum(framework.pillars.map((pillar) => pillar.max_points))
-  const factorTotal = sum(framework.pillars.map((pillar) => pillar.factors.length))
-  const bonusTotal = sum(framework.pillars.map((pillar) => pillar.bonus_opportunities.length))
-  const factors = getFactorRows(framework).filter((row) => matchesFilters(row, searchTerm, pillarId))
-  const bonuses = getBonusRows(framework).filter((row) => matchesFilters(row, searchTerm, pillarId))
-  const pdfHref = buildPdfHref(searchTerm, pillarId)
+  const factors = getFactorRows(framework).map((row) => {
+    const profile = scoringFrameworkRestaurantProfile.factors[row.id]
+    const matchedRule = row.scoring_rules.find((rule) => rule.points === profile.score)
+
+    return {
+      ...row,
+      score: profile.score,
+      evidence: profile.evidence,
+      note: profile.note,
+      matchedRule: matchedRule?.when || '',
+      pointsMissed: row.max_points - profile.score,
+    }
+  })
+
+  const bonuses = getBonusRows(framework).map((row) => {
+    const profile = scoringFrameworkRestaurantProfile.bonuses[row.id]
+
+    return {
+      ...row,
+      awarded: profile.awarded,
+      note: profile.note,
+      awardedPoints: profile.awarded ? row.points : 0,
+    }
+  })
+
+  const coreScore = sum(factors.map((row) => row.score))
+  const bonusScore = sum(bonuses.map((row) => row.awardedPoints))
+  const gradeBand = findGradeBand(framework.grade_bands, coreScore)
+  const pillarScores = framework.pillars.map((pillar) => {
+    const pillarFactors = factors.filter((row) => row.pillarId === pillar.id)
+    return {
+      ...pillar,
+      score: sum(pillarFactors.map((row) => row.score)),
+    }
+  })
 
   return (
     <main className={`scoring-framework-page ${isPdfMode ? 'scoring-framework-page-pdf' : ''}`}>
       <div className="scoring-framework-shell">
         <header className="scoring-framework-topbar">
           <div>
-            <p className="scoring-framework-kicker">YAML Source of Truth</p>
-            <h1 className="scoring-framework-title">Insurance Readiness Framework</h1>
+            <p className="scoring-framework-kicker">Restaurant Submission</p>
+            <h1 className="scoring-framework-title">{scoringFrameworkRestaurantProfile.businessName}</h1>
             <p className="scoring-framework-subtitle">
-              Review the scoring logic, evidence requirements, grade bands, and bonus paths
-              from the integrated frontend route.
+              {scoringFrameworkRestaurantProfile.profile}
             </p>
+            <p className="scoring-framework-subtitle">{scoringFrameworkRestaurantProfile.underwritingSummary}</p>
           </div>
 
           <div className="scoring-framework-actions">
@@ -235,68 +183,74 @@ export default function PageScoringFramework({ onBack }) {
               </button>
             ) : null}
             {!isPdfMode ? (
-              <a className="scoring-framework-button" href={pdfHref} download>
+              <a className="scoring-framework-button" href={buildPdfHref()} download>
                 Download PDF
               </a>
             ) : null}
-            <div className="scoring-framework-summary" aria-label="Framework summary">
-              <span className="scoring-framework-chip">
-                <strong>{coreTotal}</strong> core
-              </span>
-              <span className="scoring-framework-chip">
-                <strong>{framework.scoring_method.bonus_max_points}</strong> bonus
-              </span>
-              <span className="scoring-framework-chip">
-                <strong>{factorTotal}</strong> factors
-              </span>
-              <span className="scoring-framework-chip">
-                <strong>{bonusTotal}</strong> bonus paths
-              </span>
-            </div>
           </div>
         </header>
 
-        <section className="scoring-framework-toolbar" aria-label="Framework filters">
-          <label className="scoring-framework-field">
-            <span className="scoring-framework-field-label">Search</span>
-            <input
-              className="scoring-framework-input"
-              type="search"
-              placeholder="roof, loss runs, MFA..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value.trim().toLowerCase())}
-            />
-          </label>
+        <section className="scoring-framework-example-summary">
+          <article className="scoring-framework-example-card scoring-framework-example-card-accent">
+            <p className="scoring-framework-example-label">Business</p>
+            <h2>{scoringFrameworkRestaurantProfile.businessName}</h2>
+            <p>{scoringFrameworkRestaurantProfile.profile}</p>
+          </article>
 
-          <label className="scoring-framework-field">
-            <span className="scoring-framework-field-label">Pillar</span>
-            <select
-              className="scoring-framework-select"
-              value={pillarId}
-              onChange={(event) => setPillarId(event.target.value)}
-            >
-              <option value={ALL_PILLARS}>All pillars</option>
-              {framework.pillars.map((pillar) => (
-                <option key={pillar.id} value={pillar.id}>
-                  {pillar.name}
-                </option>
+          <article className="scoring-framework-example-card">
+            <p className="scoring-framework-example-label">Core Score</p>
+            <div className="scoring-framework-example-grade-row">
+              <span className="scoring-framework-example-grade">{gradeBand.grade}</span>
+              <div>
+                <strong className="scoring-framework-example-metric">{coreScore}/100</strong>
+                <p>{gradeBand.readiness}</p>
+              </div>
+            </div>
+            <div className="scoring-framework-summary">
+              <span className="scoring-framework-chip">
+                <strong>{bonusScore}</strong> bonus
+              </span>
+              <span className="scoring-framework-chip">
+                <strong>{coreScore + bonusScore}</strong> total
+              </span>
+            </div>
+          </article>
+
+          <article className="scoring-framework-example-card">
+            <p className="scoring-framework-example-label">Strengths</p>
+            <ul className="scoring-framework-example-list">
+              {scoringFrameworkRestaurantProfile.strengths.map((item) => (
+                <li key={item}>{item}</li>
               ))}
-            </select>
-          </label>
+            </ul>
+          </article>
 
-          <div className="scoring-framework-summary" aria-hidden="true" />
+          <article className="scoring-framework-example-card">
+            <p className="scoring-framework-example-label">Main Gaps</p>
+            <ul className="scoring-framework-example-list">
+              {scoringFrameworkRestaurantProfile.gaps.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </article>
         </section>
 
-        <section className="scoring-framework-grade-strip" aria-label="Grade bands">
-          {framework.grade_bands.map((band) => (
-            <article key={band.grade} className="scoring-framework-grade-card">
-              <span className="scoring-framework-grade-label">{band.grade}</span>
-              <span className="scoring-framework-grade-range">
-                {band.min_core_score}-{band.max_core_score}
-              </span>
-              <p>{band.readiness}</p>
-            </article>
-          ))}
+        <section className="scoring-framework-section">
+          <div className="scoring-framework-section-title">
+            <h2>Pillar Scores</h2>
+            <span>{pillarScores.length} pillars</span>
+          </div>
+
+          <div className="scoring-framework-example-pillars">
+            {pillarScores.map((pillar) => (
+              <article key={pillar.id} className="scoring-framework-example-pillar">
+                <span>{pillar.name}</span>
+                <strong>
+                  {pillar.score}/{pillar.max_points}
+                </strong>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="scoring-framework-section">
@@ -311,69 +265,55 @@ export default function PageScoringFramework({ onBack }) {
                 <tr>
                   <th>Pillar</th>
                   <th>Factor</th>
-                  <th>Max</th>
-                  <th>Score Rules</th>
+                  <th>Score</th>
+                  <th>Matched Rule</th>
                   <th>Evidence</th>
+                  <th>Underwriting Notes</th>
                 </tr>
               </thead>
               <tbody>
-                {factors.length ? (
-                  factors.map((row, index) => {
-                    const previousRow = factors[index - 1]
-                    const showDivider = !previousRow || previousRow.pillarId !== row.pillarId
+                {factors.map((row, index) => {
+                  const previousRow = factors[index - 1]
+                  const showDivider = !previousRow || previousRow.pillarId !== row.pillarId
 
-                    return (
-                      <Fragment key={row.id}>
-                        {showDivider ? (
-                          <tr className="scoring-framework-divider">
-                            <td colSpan="5">
-                              <div className="scoring-framework-divider-content">
-                                <strong>{row.pillarName}</strong>
-                                <span>{row.pillarMax} core points</span>
-                              </div>
-                            </td>
-                          </tr>
-                        ) : null}
-                        <tr>
-                          <td>
-                            <div className="scoring-framework-pillar-cell">
+                  return (
+                    <Fragment key={row.id}>
+                      {showDivider ? (
+                        <tr className="scoring-framework-divider">
+                          <td colSpan="6">
+                            <div className="scoring-framework-divider-content">
                               <strong>{row.pillarName}</strong>
-                              <span className="scoring-framework-pillar-meta">
-                                {row.pillarMax} pts
-                              </span>
+                              <span>{row.pillarMax} core points</span>
                             </div>
-                          </td>
-                          <td>
-                            <div className="scoring-framework-name-cell">
-                              <strong>{row.name}</strong>
-                              <WhyMattersBadge reason={row.why_this_matters} />
-                            </div>
-                          </td>
-                          <td className="scoring-framework-numeric">{row.max_points}</td>
-                          <td>
-                            <ol className="scoring-framework-rule-list">
-                              {row.scoring_rules.map((rule, ruleIndex) => (
-                                <li key={`${row.id}-${ruleIndex}`} className="scoring-framework-rule">
-                                  <span className="scoring-framework-points">{rule.points}</span>
-                                  <span>{rule.when}</span>
-                                </li>
-                              ))}
-                            </ol>
-                          </td>
-                          <td>
-                            <EvidenceBadges sources={row.data_sources} />
                           </td>
                         </tr>
-                      </Fragment>
-                    )
-                  })
-                ) : (
-                  <tr>
-                    <td className="scoring-framework-empty" colSpan="5">
-                      No factors match the current filters.
-                    </td>
-                  </tr>
-                )}
+                      ) : null}
+                      <tr>
+                        <td>
+                          <div className="scoring-framework-pillar-cell">
+                            <strong>{row.pillarName}</strong>
+                            <span className="scoring-framework-pillar-meta">
+                              {row.pillarMax} pts
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="scoring-framework-name-cell">
+                            <strong>{row.name}</strong>
+                          </div>
+                        </td>
+                        <td className="scoring-framework-numeric">
+                          <span className={`scoring-framework-score-pill ${getScoreClass(row.score, row.max_points)}`}>
+                            {row.score}/{row.max_points}
+                          </span>
+                        </td>
+                        <td>{row.matchedRule}</td>
+                        <td>{row.evidence}</td>
+                        <td>{row.note}</td>
+                      </tr>
+                    </Fragment>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -391,34 +331,33 @@ export default function PageScoringFramework({ onBack }) {
                 <tr>
                   <th>Pillar</th>
                   <th>Bonus</th>
-                  <th>Points</th>
-                  <th>What Counts</th>
+                  <th>Outcome</th>
+                  <th>Notes</th>
                 </tr>
               </thead>
               <tbody>
-                {bonuses.length ? (
-                  bonuses.map((row) => (
-                    <tr key={row.id}>
-                      <td>
-                        <strong>{row.pillarName}</strong>
-                      </td>
-                      <td>
-                        <div className="scoring-framework-name-cell">
-                          <strong>{row.name}</strong>
-                          <WhyMattersBadge reason={row.why_this_matters} />
-                        </div>
-                      </td>
-                      <td className="scoring-framework-numeric">+{row.points}</td>
-                      <td>{row.what_counts}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td className="scoring-framework-empty" colSpan="4">
-                      No bonus paths match the current filters.
+                {bonuses.map((row) => (
+                  <tr key={row.id}>
+                    <td>
+                      <strong>{row.pillarName}</strong>
                     </td>
+                    <td>
+                      <strong>{row.name}</strong>
+                    </td>
+                    <td className="scoring-framework-numeric">
+                      <span
+                        className={`scoring-framework-score-pill ${
+                          row.awarded
+                            ? 'scoring-framework-score-pill-strong'
+                            : 'scoring-framework-score-pill-weak'
+                        }`}
+                      >
+                        {row.awarded ? `+${row.points}` : '+0'}
+                      </span>
+                    </td>
+                    <td>{row.note}</td>
                   </tr>
-                )}
+                ))}
               </tbody>
             </table>
           </div>
