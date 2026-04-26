@@ -17,7 +17,7 @@ const EXTERIOR_RECORD_ROUTE = '/exterior/record'
 const INTERIOR_RECORD_ROUTE = '/interior/record'
 const EXTERIOR_RECORDING_ASSET = '/media/restaurant-exterior-recording.mp4'
 const INTERIOR_RECORDING_ASSET = '/media/restaurant-interior-recording.mp4'
-const EXTERIOR_RECORDING_FILE_NAME = 'restaurant-exterior-recording.mp4'
+const EXTERIOR_RECORDING_FILE_NAME = 'exterior-recording.mp4'
 const INTERIOR_RECORDING_FILE_NAME = 'restaurant-interior-recording.mp4'
 
 const SCREENS = {
@@ -32,15 +32,15 @@ const SCREENS = {
 
 const STEP_TO_SCREEN = {
   1: SCREENS.businessInfo,
-  2: SCREENS.exterior,
-  3: SCREENS.interior,
+  2: SCREENS.interior,
+  3: SCREENS.exterior,
   4: SCREENS.summary,
 }
 
 const SCREEN_TO_STEP = {
   [SCREENS.businessInfo]: 1,
-  [SCREENS.exterior]: 2,
-  [SCREENS.interior]: 3,
+  [SCREENS.interior]: 2,
+  [SCREENS.exterior]: 3,
   [SCREENS.summary]: 4,
 }
 
@@ -82,8 +82,8 @@ function getCurrentPath() {
 function computeCompletion(formData) {
   return {
     1: !!(formData.ownerName && formData.businessName && formData.address && formData.businessDescription),
-    2: !!formData.exteriorVideo,
-    3: !!formData.interiorVideo,
+    2: !!formData.interiorVideo,
+    3: !!formData.exteriorVideo,
     4: false,
     business: !!(formData.ownerName && formData.businessName && formData.address && formData.businessDescription),
     exterior: !!formData.exteriorVideo,
@@ -194,29 +194,15 @@ export default function App() {
       <Page1BusinessInfo
         data={formData}
         onChange={setFormData}
-        onNext={() => goToScreen(SCREENS.exterior)}
-      />
-    ),
-    [SCREENS.exterior]: (
-      <Page2Exterior
-        data={formData}
-        onChange={setFormData}
         onNext={() => goToScreen(SCREENS.interior)}
-        onBack={() => goToScreen(SCREENS.businessInfo)}
-        onRecordNow={() => {
-          goToScreen(SCREENS.exterior)
-          navigate(EXTERIOR_RECORD_ROUTE)
-        }}
-        pendingRecordedFile={pendingExteriorRecording}
-        onPendingRecordedFileHandled={() => setPendingExteriorRecording(null)}
       />
     ),
     [SCREENS.interior]: (
       <Page3Interior
         data={formData}
         onChange={setFormData}
-        onNext={() => goToScreen(SCREENS.summary)}
-        onBack={() => goToScreen(SCREENS.exterior)}
+        onNext={() => goToScreen(SCREENS.exterior)}
+        onBack={() => goToScreen(SCREENS.businessInfo)}
         onRecordNow={() => {
           goToScreen(SCREENS.interior)
           navigate(INTERIOR_RECORD_ROUTE)
@@ -225,11 +211,25 @@ export default function App() {
         onPendingRecordedFileHandled={() => setPendingInteriorRecording(null)}
       />
     ),
+    [SCREENS.exterior]: (
+      <Page2Exterior
+        data={formData}
+        onChange={setFormData}
+        onNext={() => goToScreen(SCREENS.summary)}
+        onBack={() => goToScreen(SCREENS.interior)}
+        onRecordNow={() => {
+          goToScreen(SCREENS.exterior)
+          navigate(EXTERIOR_RECORD_ROUTE)
+        }}
+        pendingRecordedFile={pendingExteriorRecording}
+        onPendingRecordedFileHandled={() => setPendingExteriorRecording(null)}
+      />
+    ),
     [SCREENS.summary]: (
       <Page4Summary
         data={formData}
         onChange={setFormData}
-        onBack={() => goToScreen(SCREENS.interior)}
+        onBack={() => goToScreen(SCREENS.exterior)}
         onSubmit={handleSubmit}
       />
     ),
@@ -292,7 +292,11 @@ export default function App() {
                       </div>
                       <LanguageToggle />
                     </div>
-                    {currentScreen === SCREENS.voiceIntake || currentScreen === SCREENS.businessInfo ? null : (
+                    {currentScreen === SCREENS.voiceIntake ||
+                    currentScreen === SCREENS.businessInfo ||
+                    currentScreen === SCREENS.exterior ||
+                    currentScreen === SCREENS.interior ||
+                    currentScreen === SCREENS.summary ? null : (
                       <h1 className="mt-8 max-w-xl text-center text-gray-900 sm:mt-10 mx-auto">
                         <span className="block text-[2rem] font-extrabold leading-none sm:text-[2.4rem]">Good Evening!</span>
                         <span className="mt-2 block text-lg font-semibold leading-snug text-slate-700 sm:text-[1.35rem]">
