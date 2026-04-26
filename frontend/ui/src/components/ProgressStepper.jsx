@@ -2,8 +2,8 @@ import { Fragment } from 'react'
 
 const STEPS = [
   { number: 1, label: 'Business', fullLabel: 'Business Info' },
-  { number: 2, label: 'Exterior', fullLabel: 'Exterior' },
-  { number: 3, label: 'Interior', fullLabel: 'Interior' },
+  { number: 2, label: 'Interior', fullLabel: 'Interior' },
+  { number: 3, label: 'Exterior', fullLabel: 'Exterior' },
   { number: 4, label: 'Summary', fullLabel: 'Summary' },
 ]
 
