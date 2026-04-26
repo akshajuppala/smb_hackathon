@@ -15,7 +15,7 @@ dotenv.config()
 const PORT = Number(process.env.VOICE_PREFILL_PORT || 3000)
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-3-flash-preview'
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-3.1-pro-preview'
 const TRACE_DIR = path.resolve(process.cwd(), '..', '..', '.context')
 const TRACE_LATEST_FILE = path.join(TRACE_DIR, 'voice-prefill-latest.json')
 const TRACE_HISTORY_FILE = path.join(TRACE_DIR, 'voice-prefill-traces.ndjson')
@@ -105,6 +105,9 @@ async function fetchVoicePrefillFromOpenRouter(transcript) {
       { role: 'system', content: prompt.system },
       { role: 'user', content: prompt.user },
     ],
+    reasoning: {
+      max_tokens: 100,
+    },
     temperature: 0.1,
     response_format: {
       type: 'json_schema',

@@ -1,11 +1,7 @@
-const VOICE_PREFILL_ENDPOINT = import.meta.env.VITE_VOICE_PREFILL_ENDPOINT?.trim() ?? ''
+const VOICE_PREFILL_ENDPOINT = '/api/voice-intake/prefill'
 
 export async function resolveVoiceBusinessPrefill(transcript) {
   if (!transcript?.trim()) return {}
-
-  if (!VOICE_PREFILL_ENDPOINT) {
-    throw new Error('Missing VITE_VOICE_PREFILL_ENDPOINT for voice prefill.')
-  }
 
   const response = await fetch(VOICE_PREFILL_ENDPOINT, {
     method: 'POST',

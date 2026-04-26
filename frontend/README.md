@@ -35,7 +35,7 @@ The business intake form fields now live in `ui/src/data/businessInfoFields.js`.
 - which fields are eligible for voice prefill
 - the schema and descriptions sent to an LLM mapper
 
-The current app still supports the local regex-based fallback in `ui/src/utils/voiceBusinessPrefill.js`, but if `VITE_VOICE_PREFILL_ENDPOINT` is set, the frontend will `POST` the final transcript there instead. The default example points to the local server route: `/api/voice-intake/prefill`.
+The frontend posts the final transcript to the local server route `/api/voice-intake/prefill`.
 
 Suggested server flow:
 

@@ -50,6 +50,31 @@ const ASSESSMENT_TO_SCREEN = {
   interior: SCREENS.interior,
 }
 
+function LanguageToggle() {
+  return (
+    <div
+      className="inline-flex items-center rounded-full border border-amber-200 bg-white/90 p-0.5 shadow-sm"
+      aria-label="Language toggle"
+      role="group"
+    >
+      <button
+        type="button"
+        className="rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white"
+        aria-pressed="true"
+      >
+        EN
+      </button>
+      <button
+        type="button"
+        className="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600"
+        aria-pressed="false"
+      >
+        ESP
+      </button>
+    </div>
+  )
+}
+
 function getCurrentPath() {
   return window.location.pathname || HOME_ROUTE
 }
@@ -142,6 +167,7 @@ export default function App() {
 
   const completion = computeCompletion(formData)
   const currentStep = SCREEN_TO_STEP[currentScreen] || null
+  const headerStep = currentScreen === SCREENS.voiceIntake ? 1 : currentStep
   const isScoringFrameworkRoute = pathname === SCORING_FRAMEWORK_ROUTE
   const isExteriorRecordRoute = pathname === EXTERIOR_RECORD_ROUTE
   const isInteriorRecordRoute = pathname === INTERIOR_RECORD_ROUTE
@@ -258,22 +284,29 @@ export default function App() {
                 pageContent
               ) : (
                 <div className="max-w-2xl mx-auto px-4 pt-4 pb-8">
-                  <div className="text-center mb-6 sm:mb-8">
-                    <div className="inline-flex items-center gap-2 bg-white/90 border border-gray-200 rounded-full px-3 sm:px-4 py-1.5 mb-3 sm:mb-4 shadow-sm">
-                      <span className="text-sm">🏢</span>
-                      <span className="text-[11px] sm:text-xs font-medium text-gray-600">SMB Restaurant Insurance Assessment</span>
+                  <div className="mb-6 sm:mb-8">
+                    <div className="mb-3 flex items-start justify-between gap-3 sm:mb-4">
+                      <div className="flex items-center gap-2 text-left">
+                        <span className="text-sm">🏢</span>
+                        <span className="brand-wordmark text-xl sm:text-2xl text-slate-700">Simply Covered</span>
+                      </div>
+                      <LanguageToggle />
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Insurance Readiness Check</h1>
-                    <p className="text-gray-500 text-xs sm:text-sm mt-2 max-w-md mx-auto px-2">
-                      Complete this assessment to give your insurer everything they need for an accurate quote.
-                    </p>
+                    {currentScreen === SCREENS.voiceIntake || currentScreen === SCREENS.businessInfo ? null : (
+                      <h1 className="mt-8 max-w-xl text-center text-gray-900 sm:mt-10 mx-auto">
+                        <span className="block text-[2rem] font-extrabold leading-none sm:text-[2.4rem]">Good Evening!</span>
+                        <span className="mt-2 block text-lg font-semibold leading-snug text-slate-700 sm:text-[1.35rem]">
+                          Ready to start your Insurance Readiness Check?
+                        </span>
+                      </h1>
+                    )}
                   </div>
 
-                  {currentStep ? (
+                  {headerStep ? (
                     <ProgressStepper
-                      currentStep={currentStep}
+                      currentStep={headerStep}
                       completion={completion}
-                      onStepClick={(stepNumber) => {
+                      onStepClick={currentScreen === SCREENS.voiceIntake ? undefined : (stepNumber) => {
                         const nextScreen = STEP_TO_SCREEN[stepNumber]
                         if (nextScreen) goToScreen(nextScreen)
                       }}
