@@ -108,6 +108,24 @@ function EvidenceBadges({ sources }) {
   )
 }
 
+function WhyMattersBadge({ reason }) {
+  if (!reason) {
+    return null
+  }
+
+  return (
+    <span
+      className="scoring-framework-context-badge"
+      tabIndex={0}
+      title={reason}
+      data-tooltip={reason}
+      aria-label={`Why this matters: ${reason}`}
+    >
+      Why this matters
+    </span>
+  )
+}
+
 export default function PageScoringFramework({ onBack }) {
   const initialFilters = getInitialFilters()
   const [framework, setFramework] = useState(null)
@@ -326,7 +344,10 @@ export default function PageScoringFramework({ onBack }) {
                             </div>
                           </td>
                           <td>
-                            <strong>{row.name}</strong>
+                            <div className="scoring-framework-name-cell">
+                              <strong>{row.name}</strong>
+                              <WhyMattersBadge reason={row.why_this_matters} />
+                            </div>
                           </td>
                           <td className="scoring-framework-numeric">{row.max_points}</td>
                           <td>
@@ -381,7 +402,12 @@ export default function PageScoringFramework({ onBack }) {
                       <td>
                         <strong>{row.pillarName}</strong>
                       </td>
-                      <td>{row.name}</td>
+                      <td>
+                        <div className="scoring-framework-name-cell">
+                          <strong>{row.name}</strong>
+                          <WhyMattersBadge reason={row.why_this_matters} />
+                        </div>
+                      </td>
                       <td className="scoring-framework-numeric">+{row.points}</td>
                       <td>{row.what_counts}</td>
                     </tr>

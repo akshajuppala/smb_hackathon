@@ -292,6 +292,13 @@
   gap: 3px;
 }
 
+.scoring-framework-name-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .scoring-framework-numeric {
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -349,8 +356,27 @@
   cursor: help;
 }
 
+.scoring-framework-context-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid rgba(180, 83, 9, 0.24);
+  border-radius: 999px;
+  background: rgba(251, 191, 36, 0.14);
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: help;
+  white-space: nowrap;
+}
+
 .scoring-framework-evidence-badge:hover,
-.scoring-framework-evidence-badge:focus-visible {
+.scoring-framework-evidence-badge:focus-visible,
+.scoring-framework-context-badge:hover,
+.scoring-framework-context-badge:focus-visible {
   border-color: rgba(15, 118, 110, 0.45);
   background: #ecf8f6;
   color: #0b4f4a;
@@ -358,7 +384,9 @@
 }
 
 .scoring-framework-evidence-badge:hover::after,
-.scoring-framework-evidence-badge:focus-visible::after {
+.scoring-framework-evidence-badge:focus-visible::after,
+.scoring-framework-context-badge:hover::after,
+.scoring-framework-context-badge:focus-visible::after {
   position: absolute;
   right: 0;
   top: calc(100% + 6px);
