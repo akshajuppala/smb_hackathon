@@ -40,6 +40,7 @@ framework:
       factors:
         - id: construction_type
           name: Building construction type
+          why_this_matters: "Construction type is one of the fastest ways insurers estimate fire severity and rebuild cost. Less combustible buildings are usually easier and cheaper to insure."
           max_points: 5
           data_sources:
             - County assessor record
@@ -58,6 +59,7 @@ framework:
               when: Construction type is unknown, unverified, or materially conflicts across sources.
         - id: roof_age_and_condition
           name: Roof age and condition
+          why_this_matters: "Roof failures drive expensive water and interior-damage claims. A newer or recently inspected roof reduces surprise exclusions and pricing penalties."
           max_points: 4
           data_sources:
             - Assessor record
@@ -74,6 +76,7 @@ framework:
               when: Roof age is unknown, roof is more than 20 years old without a recent clean report, or any active leak or failure is documented.
         - id: sprinkler_system
           name: Sprinkler system
+          why_this_matters: "Sprinklers can stop a small fire from turning into a total-loss event. That can materially improve insurability, pricing, and claim outcomes."
           max_points: 5
           data_sources:
             - Fire protection inspection certificate
@@ -90,6 +93,7 @@ framework:
               when: No sprinkler system is present.
         - id: fire_alarm_system
           name: Fire and smoke alarm system
+          why_this_matters: "Early detection helps people get out sooner and gets responders moving faster. Insurers see monitored alarm systems as a core loss-control measure."
           max_points: 4
           data_sources:
             - Alarm monitoring contract
@@ -106,6 +110,7 @@ framework:
               when: No fire or smoke alarm system is present.
         - id: burglar_alarm_security
           name: Burglar alarm and intrusion security
+          why_this_matters: "Intrusion controls reduce theft, vandalism, and after-hours losses. They also show that the business takes basic property protection seriously."
           max_points: 3
           data_sources:
             - Alarm contract
@@ -120,6 +125,7 @@ framework:
               when: No intrusion alarm exists, or evidence is insufficient to confirm any active system.
         - id: fire_hydrant_distance
           name: Distance to nearest fire hydrant
+          why_this_matters: "The closer the hydrant, the faster firefighters can get water on a fire. That can directly affect expected loss severity."
           max_points: 3
           data_sources:
             - OpenStreetMap
@@ -133,6 +139,7 @@ framework:
               when: Nearest fire hydrant is more than 1000 feet away, or no reliable hydrant location is available.
         - id: fire_station_distance
           name: Distance to nearest fire station
+          why_this_matters: "Response time matters in every fire or emergency. Properties closer to a staffed fire station generally present lower catastrophe risk to insurers."
           max_points: 3
           data_sources:
             - OpenStreetMap
@@ -149,6 +156,7 @@ framework:
               when: No reliable fire station location is available.
         - id: catastrophe_zone
           name: Flood and wildfire zone exposure
+          why_this_matters: "Flood and wildfire exposure can limit carrier appetite, increase deductibles, and require extra mitigation. This is often one of the biggest pricing drivers."
           max_points: 3
           data_sources:
             - FEMA Flood Map Service Center
@@ -164,6 +172,7 @@ framework:
       bonus_opportunities:
         - id: recent_property_condition_survey
           name: Recent third-party property condition survey
+          why_this_matters: "A recent third-party inspection gives underwriters more confidence and can surface fixable issues before they hurt pricing or delay a quote."
           points: 2
           actionable: true
           what_counts: Third-party inspection or property condition survey dated within the last 6 months with no open critical deficiencies.
@@ -173,6 +182,7 @@ framework:
       factors:
         - id: business_hazard_class
           name: Business hazard class
+          why_this_matters: "Your type of business strongly affects how insurers estimate claim frequency and severity. If your operation is misclassified, quotes can be wrong or declined later."
           max_points: 6
           data_sources:
             - User-provided NAICS code
@@ -189,6 +199,7 @@ framework:
               when: Hazard class cannot be verified or the operation is materially misclassified.
         - id: years_in_operation
           name: Years in operation
+          why_this_matters: "A longer operating history signals stability and gives insurers more confidence that the business can manage risk over time."
           max_points: 4
           data_sources:
             - Secretary of State filing
@@ -205,6 +216,7 @@ framework:
               when: Operating history cannot be verified.
         - id: claims_history
           name: Prior claims history
+          why_this_matters: "Past losses are one of the clearest inputs underwriters use to predict future losses. More claims usually mean higher pricing and fewer carrier options."
           max_points: 5
           data_sources:
             - Carrier loss runs
@@ -220,6 +232,7 @@ framework:
               when: Loss runs are missing, incomplete, or cannot be verified for the full 5-year period.
         - id: hours_of_operation
           name: Hours of operation
+          why_this_matters: "Late-night operations can increase theft, liability, and alcohol-related risk. Even simple store hours can change how an insurer views the account."
           max_points: 3
           data_sources:
             - User attestation
@@ -236,6 +249,7 @@ framework:
               when: Operating hours cannot be verified.
         - id: liquor_service
           name: Liquor service exposure
+          why_this_matters: "Alcohol can materially increase liability exposure. Carriers often separate beer and wine from full liquor because the risk profile changes."
           max_points: 2
           data_sources:
             - Liquor license lookup
@@ -249,6 +263,7 @@ framework:
               when: Full liquor service is offered, or alcohol exposure cannot be verified.
         - id: cooking_exposure_controls
           name: Commercial cooking exposure and suppression
+          why_this_matters: "Commercial cooking is one of the biggest fire drivers for restaurants. Underwriters want to know both the hazard level and whether suppression is actually maintained."
           max_points: 2
           data_sources:
             - Kitchen suppression inspection certificate
@@ -263,6 +278,7 @@ framework:
               when: Hazardous commercial cooking occurs without current suppression proof, or cooking exposure cannot be verified.
         - id: cash_controls
           name: Cash on premises and deposit controls
+          why_this_matters: "Large amounts of cash can attract theft and robbery. Clear deposit routines and secure storage reduce both crime risk and loss severity."
           max_points: 3
           data_sources:
             - User attestation
@@ -278,6 +294,7 @@ framework:
       bonus_opportunities:
         - id: documented_open_close_cash_procedures
           name: Written opening, closing, and cash-drop procedures
+          why_this_matters: "Written routines reduce mistakes, shrinkage, and inconsistent staff behavior. They also show that controls do not depend on one person remembering the process."
           points: 2
           actionable: true
           what_counts: Current written procedure covering opening duties, closing duties, deposit cadence, dual-control expectations if used, and after-hours cash storage.
@@ -287,6 +304,7 @@ framework:
       factors:
         - id: lease_or_deed
           name: Current lease or deed
+          why_this_matters: "This helps prove who actually occupies the space and who is responsible for the building, improvements, and insurance obligations."
           max_points: 3
           data_sources:
             - Uploaded PDF
@@ -300,6 +318,7 @@ framework:
               when: No lease or deed is provided and no public ownership record resolves the occupancy question.
         - id: certificate_of_occupancy
           name: Certificate of occupancy
+          why_this_matters: "It shows the space is legally approved for the way you are using it. Missing occupancy approval can stop coverage or create major underwriting concerns."
           max_points: 3
           data_sources:
             - Uploaded PDF
@@ -311,6 +330,7 @@ framework:
               when: No valid occupancy approval is provided or verifiable.
         - id: active_business_license
           name: Active business license
+          why_this_matters: "Insurers want evidence that the business is active and operating lawfully. An expired or missing license can create avoidable friction very early in the process."
           max_points: 3
           data_sources:
             - Uploaded PDF
@@ -324,6 +344,7 @@ framework:
               when: No business license is provided or the license cannot be verified.
         - id: prior_loss_runs
           name: Prior loss runs
+          why_this_matters: "Loss runs are one of the first documents underwriters ask for. If they are missing or incomplete, quoting often slows down or stops."
           max_points: 4
           data_sources:
             - Carrier-provided PDF
@@ -337,6 +358,7 @@ framework:
               when: No loss runs are provided.
         - id: financial_statements
           name: Financial statements or tax returns
+          why_this_matters: "Financials help validate that the business is real, operating, and sized correctly. They can also support limit decisions and business-interruption discussions."
           max_points: 3
           data_sources:
             - Uploaded P&L
@@ -351,6 +373,7 @@ framework:
               when: No current financial statements or tax returns are provided.
         - id: written_safety_procedures
           name: Written safety and emergency procedures
+          why_this_matters: "Written procedures show that staff have a plan for emergencies instead of improvising during a loss. That reduces both people risk and claim severity."
           max_points: 3
           data_sources:
             - Uploaded handbook
@@ -364,6 +387,7 @@ framework:
               when: No written procedures are provided.
         - id: vendor_cois
           name: Vendor certificates of insurance
+          why_this_matters: "COIs help confirm that outside vendors carry their own insurance. That matters because uninsured vendors can push more liability back onto your business."
           max_points: 3
           data_sources:
             - Uploaded COI packet
@@ -377,6 +401,7 @@ framework:
               when: No COIs are on file or vendor scope cannot be reconciled.
         - id: maintenance_logs
           name: Equipment and building maintenance logs
+          why_this_matters: "Maintenance records prove that key systems are being looked after. They help underwriters trust the risk and can reduce disputes after a claim."
           max_points: 3
           data_sources:
             - Uploaded maintenance log
@@ -391,6 +416,7 @@ framework:
       bonus_opportunities:
         - id: complete_document_package
           name: Complete document package
+          why_this_matters: "A clean document package makes underwriting faster and easier. It signals that the business is organized and reduces back-and-forth before quoting."
           points: 3
           actionable: true
           what_counts: Every documentation factor in this pillar receives full points at the same time.
@@ -400,6 +426,7 @@ framework:
       factors:
         - id: security_cameras
           name: Security cameras
+          why_this_matters: "Cameras deter theft, help investigate incidents, and can resolve disputed claims faster. Coverage matters more than just owning a few devices."
           max_points: 4
           data_sources:
             - Photo evidence
@@ -414,6 +441,7 @@ framework:
               when: No cameras are present or no reliable evidence is provided.
         - id: employee_safety_training
           name: Employee safety training
+          why_this_matters: "Training lowers the chance of preventable injuries and shows the business is actively managing workplace risk."
           max_points: 3
           data_sources:
             - Training roster
@@ -428,6 +456,7 @@ framework:
               when: No safety training evidence is provided.
         - id: cybersecurity_basics
           name: Cybersecurity basics for payment or customer data
+          why_this_matters: "If you handle payment or customer data, weak cyber controls can lead to fraud, downtime, fines, and reputation damage. Insurers increasingly screen for basic controls."
           max_points: 3
           data_sources:
             - PCI attestation
@@ -442,6 +471,7 @@ framework:
               when: No cyber control evidence is provided for a business that stores, transmits, or processes payment or customer data.
         - id: workers_comp_class_accuracy
           name: Workers' compensation class-code accuracy
+          why_this_matters: "Wrong workers' comp codes can trigger premium audits, reclassification costs, and coverage issues. The policy should match what employees actually do."
           max_points: 3
           data_sources:
             - Workers' comp policy
@@ -454,6 +484,7 @@ framework:
               when: Class codes are missing, inaccurate, or cannot be verified against operations.
         - id: signage_and_lighting
           name: Exterior signage and lighting
+          why_this_matters: "Good lighting and clear signage help prevent slip-and-fall claims, deter crime, and make the property easier to navigate in an emergency."
           max_points: 3
           data_sources:
             - Daytime photo
@@ -467,6 +498,7 @@ framework:
               when: Exterior lighting is inadequate, signage is absent, or evidence is not provided.
         - id: emergency_contact_list
           name: Posted emergency contact list
+          why_this_matters: "When something goes wrong, minutes matter. A visible contact list helps staff respond faster and reduces confusion during an incident."
           max_points: 2
           data_sources:
             - Photo evidence
@@ -477,6 +509,7 @@ framework:
               when: No posted emergency contact list is visible.
         - id: annual_property_inspection
           name: Annual property inspection
+          why_this_matters: "Regular inspections catch small problems before they become insurance claims. They also show that the business is not ignoring visible maintenance risks."
           max_points: 2
           data_sources:
             - Inspection report
@@ -491,6 +524,7 @@ framework:
       bonus_opportunities:
         - id: business_continuity_plan
           name: Business continuity and incident response plan
+          why_this_matters: "A recovery plan reduces downtime after a fire, cyber event, or utility outage. Insurers value businesses that can keep losses from spiraling after the first incident."
           points: 3
           actionable: true
           what_counts: Current written plan covering emergency shutdown, key contacts, vendor fallback, data recovery, and reopening steps.

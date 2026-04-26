@@ -2,14 +2,19 @@ import http from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
 import { mkdir, writeFile, appendFile, readFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 import dotenv from 'dotenv'
 import yaml from 'js-yaml'
 import { chromium } from 'playwright'
 import { NAICS_722_LEAF_CODES, NAICS_722_LEAF_CODE_MAP } from '../src/data/naics722LeafCodes.js'
 import { buildVoiceBusinessPrefillPrompt } from '../src/utils/voiceBusinessPrefill.js'
 
-dotenv.config({ path: '.env.server.local' })
-dotenv.config({ path: '.env.local', override: false })
+const SERVER_FILE = fileURLToPath(import.meta.url)
+const SERVER_DIR = path.dirname(SERVER_FILE)
+const APP_ROOT = path.resolve(SERVER_DIR, '..')
+
+dotenv.config({ path: path.join(APP_ROOT, '.env.server.local') })
+dotenv.config({ path: path.join(APP_ROOT, '.env.local'), override: false })
 dotenv.config()
 
 const PORT = Number(process.env.VOICE_PREFILL_PORT || 3000)

@@ -33,8 +33,8 @@ export default function Page3Interior({
       setAnalyzing(false)
       setCvResults(MOCK_CV_INTERIOR)
       const autoChecked = {}
-      MOCK_CV_INTERIOR.forEach((r) => {
-        if (r.detected === true) autoChecked[r.id] = true
+      MOCK_CV_INTERIOR.forEach((result) => {
+        if (result.detected === true) autoChecked[result.id] = true
       })
       onChange({
         ...data,
@@ -127,7 +127,6 @@ export default function Page3Interior({
 
       {hasInteriorAssessment && (
         <>
-          {/* Sprinkler Section */}
           <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xl">💧</span>
@@ -139,8 +138,8 @@ export default function Page3Interior({
                 <input
                   type="date"
                   value={data.sprinklerLastInspection || ''}
-                  onChange={(e) => onChange({ ...data, sprinklerLastInspection: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  onChange={(event) => onChange({ ...data, sprinklerLastInspection: event.target.value })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                 />
               </div>
               <div>
@@ -149,8 +148,8 @@ export default function Page3Interior({
                   type="text"
                   placeholder="e.g. Bay Area Fire Protection"
                   value={data.sprinklerCompany || ''}
-                  onChange={(e) => onChange({ ...data, sprinklerCompany: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  onChange={(event) => onChange({ ...data, sprinklerCompany: event.target.value })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                 />
               </div>
             </div>
@@ -161,7 +160,6 @@ export default function Page3Interior({
             />
           </div>
 
-          {/* Kitchen & Fire Suppression */}
           <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xl">🍳</span>
@@ -173,8 +171,8 @@ export default function Page3Interior({
                 <input
                   type="date"
                   value={data.hoodLastInspection || ''}
-                  onChange={(e) => onChange({ ...data, hoodLastInspection: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  onChange={(event) => onChange({ ...data, hoodLastInspection: event.target.value })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                 />
               </div>
               <div>
@@ -182,8 +180,8 @@ export default function Page3Interior({
                 <input
                   type="date"
                   value={data.ductLastCleaned || ''}
-                  onChange={(e) => onChange({ ...data, ductLastCleaned: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  onChange={(event) => onChange({ ...data, ductLastCleaned: event.target.value })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                 />
               </div>
             </div>
@@ -194,7 +192,6 @@ export default function Page3Interior({
             />
           </div>
 
-          {/* Electrical, Plumbing, HVAC */}
           <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xl">⚡</span>
@@ -207,8 +204,8 @@ export default function Page3Interior({
                   type="number"
                   placeholder="Year (e.g. 2010)"
                   value={data.electricalUpgradeYear || ''}
-                  onChange={(e) => onChange({ ...data, electricalUpgradeYear: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  onChange={(event) => onChange({ ...data, electricalUpgradeYear: event.target.value })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                 />
               </div>
               <div>
@@ -216,8 +213,8 @@ export default function Page3Interior({
                 <input
                   type="date"
                   value={data.plumbingLastInspection || ''}
-                  onChange={(e) => onChange({ ...data, plumbingLastInspection: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  onChange={(event) => onChange({ ...data, plumbingLastInspection: event.target.value })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                 />
               </div>
               <div>
@@ -225,8 +222,8 @@ export default function Page3Interior({
                 <input
                   type="date"
                   value={data.hvacLastService || ''}
-                  onChange={(e) => onChange({ ...data, hvacLastService: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  onChange={(event) => onChange({ ...data, hvacLastService: event.target.value })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                 />
               </div>
             </div>
@@ -234,8 +231,8 @@ export default function Page3Interior({
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">Panel / wiring type</label>
               <select
                 value={data.wiringType || ''}
-                onChange={(e) => onChange({ ...data, wiringType: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-300"
+                onChange={(event) => onChange({ ...data, wiringType: event.target.value })}
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
               >
                 <option value="">Select wiring type...</option>
                 <option value="modern_copper">Modern copper (standard)</option>
@@ -244,10 +241,10 @@ export default function Page3Interior({
                 <option value="unknown">Unknown</option>
               </select>
               {data.wiringType === 'aluminum' && (
-                <p className="text-xs text-orange-600 mt-1">⚠️ Aluminum wiring significantly increases fire risk and insurance premiums. Consider upgrading.</p>
+                <p className="mt-1 text-xs text-orange-600">⚠️ Aluminum wiring significantly increases fire risk and insurance premiums. Consider upgrading.</p>
               )}
               {data.wiringType === 'knob_tube' && (
-                <p className="text-xs text-red-600 mt-1">🚨 Knob-and-tube wiring is a major underwriting concern. Most insurers require immediate remediation.</p>
+                <p className="mt-1 text-xs text-red-600">🚨 Knob-and-tube wiring is a major underwriting concern. Most insurers require immediate remediation.</p>
               )}
             </div>
             <PDFUpload
@@ -257,7 +254,6 @@ export default function Page3Interior({
             />
           </div>
 
-          {/* Fire Safety Checklist */}
           <ChecklistSection
             icon="🔥"
             title="Fire safety"
@@ -272,8 +268,8 @@ export default function Page3Interior({
                 rows={2}
                 placeholder="e.g. Fire extinguishers serviced by XYZ Co., last tagged Jan 2025. Ansul system inspected semi-annually."
                 value={data.fireSafetyNotes || ''}
-                onChange={(e) => onChange({ ...data, fireSafetyNotes: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none"
+                onChange={(event) => onChange({ ...data, fireSafetyNotes: event.target.value })}
+                className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
               />
               <PDFUpload
                 label="Upload any fire safety certificates (PDF)"
@@ -283,7 +279,6 @@ export default function Page3Interior({
             </div>
           </ChecklistSection>
 
-          {/* Building & Structure Checklist */}
           <ChecklistSection
             icon="🏠"
             title="Building & structure"
@@ -298,8 +293,8 @@ export default function Page3Interior({
                 rows={2}
                 placeholder="e.g. Roof replaced in 2018 with TPO membrane. No mold or water intrusion. Lease expires 2027."
                 value={data.buildingNotes || ''}
-                onChange={(e) => onChange({ ...data, buildingNotes: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none"
+                onChange={(event) => onChange({ ...data, buildingNotes: event.target.value })}
+                className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
               />
               <PDFUpload
                 label="Upload building inspection or compliance documents (PDF)"
@@ -309,16 +304,16 @@ export default function Page3Interior({
             </div>
           </ChecklistSection>
 
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
             <button
               onClick={onBack}
-              className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+              className="w-full rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:w-auto sm:text-base"
             >
               ← Back
             </button>
             <button
               onClick={onNext}
-              className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-900 text-white text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-700 transition-colors"
+              className="w-full rounded-xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-700 sm:w-auto sm:px-8 sm:text-base"
             >
               Continue to Summary →
             </button>
