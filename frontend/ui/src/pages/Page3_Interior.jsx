@@ -1,7 +1,5 @@
+import { createPortal } from 'react-dom'
 import { useEffect, useState } from 'react'
-import ChecklistSection from '../components/ChecklistSection'
-import PDFUpload from '../components/PDFUpload'
-import { buildingChecklist, fireSafetyChecklist } from '../data/checklistData'
 
 const MOCK_CV_INTERIOR = [
   { id: 'sprinkler_system', label: 'Sprinkler heads visible on ceiling', detected: true },
@@ -11,6 +9,182 @@ const MOCK_CV_INTERIOR = [
   { id: 'fire_exits', label: 'Exit signs clearly visible', detected: true },
   { id: 'structural_damage', label: 'No visible water stains, mold, or damage', detected: true },
 ]
+
+const DEFAULT_OPEN_PILLAR_ID = 'property_physical_risk'
+const MOCK_RULE_INDEX_BY_FACTOR_ID = {
+  sprinkler_system: 2,
+  fire_alarm_system: 1,
+  cooking_exposure_controls: 1,
+  maintenance_logs: 1,
+}
+const INTERIOR_FACTOR_IDS_BY_PILLAR = {
+  property_physical_risk: ['sprinkler_system', 'fire_alarm_system'],
+  operations_liability: ['cooking_exposure_controls'],
+  documentation_readiness: ['maintenance_logs'],
+  mitigation_controls: ['emergency_contact_list'],
+}
+
+function getFrameworkPayload(payload) {
+  return payload?.framework || payload
+}
+
+function getSelectedRule(factor) {
+  const preferredRuleIndex = MOCK_RULE_INDEX_BY_FACTOR_ID[factor.id]
+
+  if (preferredRuleIndex !== undefined) {
+    return factor.scoring_rules[Math.min(preferredRuleIndex, factor.scoring_rules.length - 1)]
+  }
+
+  return factor.scoring_rules.reduce((lowestRule, rule) => {
+    if (!lowestRule) {
+      return rule
+    }
+
+    return rule.points < lowestRule.points ? rule : lowestRule
+  }, null)
+}
+
+function getFactorScore(factor) {
+  const selectedRule = getSelectedRule(factor)
+
+  return {
+    ...factor,
+    points: selectedRule?.points ?? 0,
+    selectedRule,
+  }
+}
+
+function getPillarSummary(pillar) {
+  const allowedFactorIds = new Set(INTERIOR_FACTOR_IDS_BY_PILLAR[pillar.id] || [])
+  const factors = pillar.factors
+    .filter((factor) => allowedFactorIds.has(factor.id))
+    .map(getFactorScore)
+  const points = factors.reduce((total, factor) => total + factor.points, 0)
+  const maxPoints = factors.reduce((total, factor) => total + factor.max_points, 0)
+
+  return {
+    ...pillar,
+    factors,
+    points,
+    max_points: maxPoints,
+  }
+}
+
+function getScoreTone(points, maxPoints) {
+  const ratio = maxPoints > 0 ? points / maxPoints : 0
+
+  if (ratio >= 0.75) {
+    return {
+      badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+      dot: 'bg-emerald-500',
+    }
+  }
+
+  if (ratio >= 0.4) {
+    return {
+      badge: 'bg-amber-100 text-amber-700 border-amber-200',
+      dot: 'bg-amber-500',
+    }
+  }
+
+  return {
+    badge: 'bg-rose-100 text-rose-700 border-rose-200',
+    dot: 'bg-rose-500',
+  }
+}
+
+function ScoreBadge({ points, maxPoints }) {
+  const tone = getScoreTone(points, maxPoints)
+
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${tone.badge}`}>
+      {points}/{maxPoints}
+    </span>
+  )
+}
+
+function FactorDetailModal({ factor, onClose }) {
+  const [overlayHost, setOverlayHost] = useState(null)
+
+  useEffect(() => {
+    setOverlayHost(document.querySelector('.phone-screen'))
+  }, [])
+
+  if (!factor || !overlayHost) {
+    return null
+  }
+
+  return createPortal(
+    <div className="absolute inset-x-0 bottom-0 top-14 z-50 flex items-end justify-center bg-slate-950/45 px-3 pb-3 pt-6">
+      <div className="w-full max-w-lg overflow-hidden rounded-[28px] bg-white shadow-2xl">
+        <div className="border-b border-slate-200 px-4 py-3">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Scoring detail</p>
+              <h3 className="mt-1 text-base font-bold text-slate-900">{factor.name}</h3>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full px-2 py-1 text-lg font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Close score details"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="mt-2 flex items-center gap-2">
+            <ScoreBadge points={factor.points} maxPoints={factor.max_points} />
+          </div>
+        </div>
+
+        <div className="max-h-[min(70vh,30rem)] space-y-4 overflow-y-auto px-4 py-4">
+          <section>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Why this matters</p>
+            <p className="mt-2 text-sm leading-6 text-slate-700">{factor.why_this_matters}</p>
+          </section>
+
+          <section>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Current score</p>
+                <span className="text-sm font-semibold text-slate-900">
+                  {factor.points}/{factor.max_points}
+                </span>
+              </div>
+              <p className="mt-1 text-xs leading-5 text-slate-700">{factor.selectedRule.when}</p>
+            </div>
+          </section>
+
+          <section>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Possible scores</p>
+            <div className="mt-2 space-y-1.5">
+              {factor.scoring_rules.map((rule, index) => {
+                const isCurrentRule = rule.when === factor.selectedRule.when && rule.points === factor.selectedRule.points
+                const tone = getScoreTone(rule.points, factor.max_points)
+
+                return (
+                  <div
+                    key={`${factor.id}-${index}`}
+                    className={`rounded-xl border px-3 py-2 ${isCurrentRule ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-800'}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className={`text-xs leading-5 ${isCurrentRule ? 'text-white' : 'text-slate-700'}`}>{rule.when}</p>
+                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${isCurrentRule ? 'border-white/20 bg-white/10 text-white' : tone.badge}`}>
+                        {rule.points}/{factor.max_points}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>,
+    overlayHost
+  )
+}
 
 export default function Page3Interior({
   data,
@@ -23,6 +197,10 @@ export default function Page3Interior({
 }) {
   const [analyzing, setAnalyzing] = useState(false)
   const [cvResults, setCvResults] = useState(null)
+  const [framework, setFramework] = useState(null)
+  const [frameworkError, setFrameworkError] = useState('')
+  const [openPillarId, setOpenPillarId] = useState(DEFAULT_OPEN_PILLAR_ID)
+  const [selectedFactor, setSelectedFactor] = useState(null)
   const hasInteriorAssessment = Boolean(data.interiorVideo)
 
   function handleVideoFile(file) {
@@ -52,20 +230,47 @@ export default function Page3Interior({
     onPendingRecordedFileHandled?.()
   }, [pendingRecordedFile, onPendingRecordedFileHandled])
 
-  function toggleFire(id) {
-    onChange({ ...data, fireSafetyChecked: { ...(data.fireSafetyChecked || {}), [id]: !data.fireSafetyChecked?.[id] } })
-  }
+  useEffect(() => {
+    let isCancelled = false
 
-  function toggleBuilding(id) {
-    onChange({ ...data, buildingChecked: { ...(data.buildingChecked || {}), [id]: !data.buildingChecked?.[id] } })
-  }
+    async function loadFramework() {
+      try {
+        const response = await fetch('/api/scoring-framework')
+
+        if (!response.ok) {
+          throw new Error(`Failed to load framework data: ${response.status}`)
+        }
+
+        const payload = await response.json()
+
+        if (!isCancelled) {
+          setFramework(getFrameworkPayload(payload))
+        }
+      } catch (loadError) {
+        if (!isCancelled) {
+          setFrameworkError(loadError instanceof Error ? loadError.message : 'Failed to load framework data.')
+        }
+      }
+    }
+
+    loadFramework()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [])
+
+  const pillarSummaries = framework?.pillars
+    ?.filter((pillar) => Object.hasOwn(INTERIOR_FACTOR_IDS_BY_PILLAR, pillar.id))
+    .map(getPillarSummary)
+    .filter((pillar) => pillar.factors.length > 0) || []
 
   return (
     <div>
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-1">Interior Assessment</h2>
         <p className="text-gray-500 text-sm">
-          Start a guided interior walkthrough. We’ll review the recording for fire safety and building condition signals before you complete the rest of the form.
+          Start a guided interior walkthrough. We&apos;ll review the recording for fire safety and building condition signals before showing the relevant scoring sections.
         </p>
       </div>
 
@@ -82,227 +287,87 @@ export default function Page3Interior({
           >
             {data.interiorVideo ? 'Restart assesment' : 'Start assesment'}
           </button>
-          {data.interiorVideo && !analyzing && (
+          {data.interiorVideo ? (
             <p className="mt-3 text-xs text-green-700">
               Recorded walkthrough attached: {data.interiorVideo.name}
             </p>
-          )}
+          ) : null}
         </div>
 
-        {analyzing && (
-          <div className="mt-4 flex items-center gap-3 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
-            <svg className="h-4 w-4 animate-spin flex-shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-            </svg>
-            Analyzing video with computer vision model...
-          </div>
-        )}
-
-        {cvResults && !analyzing && (
-          <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white">
-            <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3">
-              <span className="text-green-500">✓</span>
-              <span className="text-sm font-semibold text-gray-800">CV Analysis Complete</span>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {cvResults.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                  <span className="min-w-0 text-sm text-gray-700">{item.label}</span>
-                  <span className={`flex-shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${
-                    item.detected === true
-                      ? 'bg-green-100 text-green-700'
-                      : item.detected === false
-                      ? 'bg-red-100 text-red-600'
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {item.detected === true ? 'Detected' : item.detected === false ? 'Not found' : 'Unclear'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {hasInteriorAssessment && (
+      {hasInteriorAssessment ? (
         <>
-          <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl">💧</span>
-              <h3 className="font-semibold text-gray-800">Sprinkler system details</h3>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Date of last sprinkler inspection</label>
-                <input
-                  type="date"
-                  value={data.sprinklerLastInspection || ''}
-                  onChange={(event) => onChange({ ...data, sprinklerLastInspection: event.target.value })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-                />
+          <div className="mb-8">
+            {frameworkError ? (
+              <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700">
+                {frameworkError}
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Inspection company name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Bay Area Fire Protection"
-                  value={data.sprinklerCompany || ''}
-                  onChange={(event) => onChange({ ...data, sprinklerCompany: event.target.value })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-                />
+            ) : null}
+
+            {!framework && !frameworkError ? (
+              <div className="mb-4 rounded-3xl border border-slate-200 bg-white px-5 py-8 text-center">
+                <p className="text-sm font-semibold text-slate-900">Loading interior scoring fields...</p>
+                <p className="mt-2 text-sm text-slate-500">Pulling the relevant pillars from the scoring framework.</p>
               </div>
-            </div>
-            <PDFUpload
-              label="Upload sprinkler inspection certificate (PDF)"
-              multiple
-              onFiles={(files) => onChange({ ...data, sprinklerPDFs: files })}
-            />
+            ) : null}
+
+            {pillarSummaries.map((pillar) => {
+              const isOpen = openPillarId === pillar.id
+              const tone = getScoreTone(pillar.points, pillar.max_points)
+
+              return (
+                <section
+                  key={pillar.id}
+                  className="mb-4 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.06)]"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenPillarId(isOpen ? null : pillar.id)}
+                    className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-slate-50 sm:px-5"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2.5 w-2.5 rounded-full ${tone.dot}`} />
+                        <p className="text-base font-semibold text-slate-900 sm:text-lg">{pillar.name}</p>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {pillar.factors.length} relevant scored items on this page
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <ScoreBadge points={pillar.points} maxPoints={pillar.max_points} />
+                      <span className="text-xl text-slate-400">{isOpen ? '−' : '+'}</span>
+                    </div>
+                  </button>
+
+                  {isOpen ? (
+                    <div className="border-t border-slate-200 bg-slate-50/70 px-3 py-2 sm:px-4">
+                      <div className="space-y-2">
+                        {pillar.factors.map((factor) => (
+                          <button
+                            key={factor.id}
+                            type="button"
+                            onClick={() => setSelectedFactor(factor)}
+                            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-transparent bg-white px-4 py-3 text-left transition-colors hover:border-slate-200 hover:bg-slate-50"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-slate-800">{factor.name}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <ScoreBadge points={factor.points} maxPoints={factor.max_points} />
+                              <span className="text-sm text-slate-400">›</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </section>
+              )
+            })}
           </div>
-
-          <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl">🍳</span>
-              <h3 className="font-semibold text-gray-800">Kitchen & fire suppression</h3>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Hood suppression last inspected</label>
-                <input
-                  type="date"
-                  value={data.hoodLastInspection || ''}
-                  onChange={(event) => onChange({ ...data, hoodLastInspection: event.target.value })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Grease duct last professionally cleaned</label>
-                <input
-                  type="date"
-                  value={data.ductLastCleaned || ''}
-                  onChange={(event) => onChange({ ...data, ductLastCleaned: event.target.value })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-                />
-              </div>
-            </div>
-            <PDFUpload
-              label="Upload hood suppression certificate and duct cleaning logs (PDF)"
-              multiple
-              onFiles={(files) => onChange({ ...data, kitchenPDFs: files })}
-            />
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl">⚡</span>
-              <h3 className="font-semibold text-gray-800">Electrical, plumbing & HVAC</h3>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Electrical last upgraded</label>
-                <input
-                  type="number"
-                  placeholder="Year (e.g. 2010)"
-                  value={data.electricalUpgradeYear || ''}
-                  onChange={(event) => onChange({ ...data, electricalUpgradeYear: event.target.value })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Plumbing last inspected</label>
-                <input
-                  type="date"
-                  value={data.plumbingLastInspection || ''}
-                  onChange={(event) => onChange({ ...data, plumbingLastInspection: event.target.value })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5">HVAC last serviced</label>
-                <input
-                  type="date"
-                  value={data.hvacLastService || ''}
-                  onChange={(event) => onChange({ ...data, hvacLastService: event.target.value })}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Panel / wiring type</label>
-              <select
-                value={data.wiringType || ''}
-                onChange={(event) => onChange({ ...data, wiringType: event.target.value })}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-              >
-                <option value="">Select wiring type...</option>
-                <option value="modern_copper">Modern copper (standard)</option>
-                <option value="aluminum">Aluminum wiring (higher risk)</option>
-                <option value="knob_tube">Knob-and-tube (high risk)</option>
-                <option value="unknown">Unknown</option>
-              </select>
-              {data.wiringType === 'aluminum' && (
-                <p className="mt-1 text-xs text-orange-600">⚠️ Aluminum wiring significantly increases fire risk and insurance premiums. Consider upgrading.</p>
-              )}
-              {data.wiringType === 'knob_tube' && (
-                <p className="mt-1 text-xs text-red-600">🚨 Knob-and-tube wiring is a major underwriting concern. Most insurers require immediate remediation.</p>
-              )}
-            </div>
-            <PDFUpload
-              label="Upload electrical, plumbing, or HVAC inspection reports (PDF)"
-              multiple
-              onFiles={(files) => onChange({ ...data, systemPDFs: files })}
-            />
-          </div>
-
-          <ChecklistSection
-            icon="🔥"
-            title="Fire safety"
-            impact="critical"
-            items={fireSafetyChecklist}
-            checked={data.fireSafetyChecked || {}}
-            onToggle={toggleFire}
-          >
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Additional fire safety notes</label>
-              <textarea
-                rows={2}
-                placeholder="e.g. Fire extinguishers serviced by XYZ Co., last tagged Jan 2025. Ansul system inspected semi-annually."
-                value={data.fireSafetyNotes || ''}
-                onChange={(event) => onChange({ ...data, fireSafetyNotes: event.target.value })}
-                className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-              />
-              <PDFUpload
-                label="Upload any fire safety certificates (PDF)"
-                multiple
-                onFiles={(files) => onChange({ ...data, fireSafetyPDFs: files })}
-              />
-            </div>
-          </ChecklistSection>
-
-          <ChecklistSection
-            icon="🏠"
-            title="Building & structure"
-            impact="high"
-            items={buildingChecklist}
-            checked={data.buildingChecked || {}}
-            onToggle={toggleBuilding}
-          >
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Additional building notes</label>
-              <textarea
-                rows={2}
-                placeholder="e.g. Roof replaced in 2018 with TPO membrane. No mold or water intrusion. Lease expires 2027."
-                value={data.buildingNotes || ''}
-                onChange={(event) => onChange({ ...data, buildingNotes: event.target.value })}
-                className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-              />
-              <PDFUpload
-                label="Upload building inspection or compliance documents (PDF)"
-                multiple
-                onFiles={(files) => onChange({ ...data, buildingPDFs: files })}
-              />
-            </div>
-          </ChecklistSection>
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
             <button
@@ -319,7 +384,9 @@ export default function Page3Interior({
             </button>
           </div>
         </>
-      )}
+      ) : null}
+
+      <FactorDetailModal factor={selectedFactor} onClose={() => setSelectedFactor(null)} />
     </div>
   )
 }

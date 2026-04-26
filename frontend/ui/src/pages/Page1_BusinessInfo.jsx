@@ -35,13 +35,13 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
 
   useEffect(() => {
     if (data.address?.length > 10) {
-      const riskTarget = [data.resolvedNeighborhood, data.resolvedSecondaryArea, data.address].filter(Boolean).join(', ')
+      const riskTarget = [...(data.resolvedAreas || []), data.address].filter(Boolean)
       const result = assessNeighborhoodRisk(riskTarget)
       setRiskResult(result)
     } else {
       setRiskResult(null)
     }
-  }, [data.address, data.resolvedNeighborhood, data.resolvedSecondaryArea])
+  }, [data.address, data.resolvedAreas])
 
   useEffect(() => {
     const address = data.address?.trim()
@@ -73,6 +73,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
           postalCode: result.postalCode || '',
           resolvedNeighborhood: result.neighborhood || '',
           resolvedSecondaryArea: result.secondaryArea || '',
+          resolvedAreas: result.areas || [result.neighborhood, result.secondaryArea].filter(Boolean),
           addressLookupQuery: result.formattedAddress || address,
         }
 

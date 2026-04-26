@@ -388,6 +388,7 @@ async function resolveNeighborhood(searchParams) {
     postalCode: match.address.postcode || '',
     neighborhood: areaCandidates[0] || '',
     secondaryArea: areaCandidates[1] || '',
+    areas: areaCandidates,
     latitude: match.lat || '',
     longitude: match.lon || '',
   }
