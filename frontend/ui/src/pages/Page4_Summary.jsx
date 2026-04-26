@@ -91,11 +91,7 @@ function FactorDetailModal({ factor, onClose }) {
     setOverlayHost(document.querySelector('.phone-screen'))
   }, [])
 
-  if (!factor) {
-    return null
-  }
-
-  if (!overlayHost) {
+  if (!factor || !overlayHost) {
     return null
   }
 
@@ -176,6 +172,7 @@ export default function Page4Summary({ onBack, onSubmit }) {
   const [error, setError] = useState('')
   const [openPillarId, setOpenPillarId] = useState(DEFAULT_OPEN_PILLAR_ID)
   const [selectedFactor, setSelectedFactor] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     let isCancelled = false
@@ -206,6 +203,14 @@ export default function Page4Summary({ onBack, onSubmit }) {
       isCancelled = true
     }
   }, [])
+
+  async function handleSubmit() {
+    if (isSubmitting) return
+
+    setIsSubmitting(true)
+    await new Promise((resolve) => window.setTimeout(resolve, 1500))
+    onSubmit()
+  }
 
   const pillarSummaries = framework?.pillars?.map(getPillarSummary) || []
 
@@ -290,15 +295,29 @@ export default function Page4Summary({ onBack, onSubmit }) {
       <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
         <button
           onClick={onBack}
+          disabled={isSubmitting}
           className="w-full rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:w-auto sm:text-base"
         >
           ← Back
         </button>
         <button
-          onClick={onSubmit}
-          className="w-full rounded-xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-700 sm:w-auto sm:px-8 sm:text-base"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="w-full rounded-xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-700 sm:w-auto sm:px-8 sm:text-base"
         >
-          Submit Assessment ✓
+          <span className="inline-flex items-center gap-2">
+            {isSubmitting ? (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                />
+                Emailing your assessment...
+              </>
+            ) : (
+              'email me my assessment'
+            )}
+          </span>
         </button>
       </div>
 

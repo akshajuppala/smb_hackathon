@@ -1,5 +1,7 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useState } from 'react'
+import ChecklistSection from '../components/ChecklistSection'
+import { exteriorSecurityChecklist, locationChecklist } from '../data/checklistData'
 
 const MOCK_CV_RESULTS = [
   { id: 'impact_glass', label: 'Impact-resistant glass', detected: true },
@@ -198,6 +200,7 @@ export default function Page2Exterior({
   const [frameworkError, setFrameworkError] = useState('')
   const [openPillarId, setOpenPillarId] = useState(DEFAULT_OPEN_PILLAR_ID)
   const [selectedFactor, setSelectedFactor] = useState(null)
+  const hasExteriorAssessment = Boolean(data.exteriorVideo)
 
   function handleVideoFile(file) {
     onChange({ ...data, exteriorVideo: file })
@@ -206,10 +209,9 @@ export default function Page2Exterior({
     setTimeout(() => {
       setAnalyzing(false)
       setCvResults(MOCK_CV_RESULTS)
-      // Pre-fill detected checklist items
       const autoChecked = {}
-      MOCK_CV_RESULTS.forEach((r) => {
-        if (r.detected === true) autoChecked[r.id] = true
+      MOCK_CV_RESULTS.forEach((result) => {
+        if (result.detected === true) autoChecked[result.id] = true
       })
       onChange({
         ...data,
@@ -256,6 +258,26 @@ export default function Page2Exterior({
     }
   }, [])
 
+  function toggleCheck(id) {
+    onChange({
+      ...data,
+      exteriorChecked: {
+        ...(data.exteriorChecked || {}),
+        [id]: !data.exteriorChecked?.[id],
+      },
+    })
+  }
+
+  function toggleLocationCheck(id) {
+    onChange({
+      ...data,
+      locationChecked: {
+        ...(data.locationChecked || {}),
+        [id]: !data.locationChecked?.[id],
+      },
+    })
+  }
+
   const pillarSummaries = framework?.pillars
     ?.filter((pillar) => Object.hasOwn(EXTERIOR_FACTOR_IDS_BY_PILLAR, pillar.id))
     .map(getPillarSummary)
@@ -285,7 +307,7 @@ export default function Page2Exterior({
           </button>
           {data.exteriorVideo && !analyzing && (
             <p className="mt-3 text-xs text-green-700">
-              Recorded walkthrough attached: {data.exteriorVideo.name}
+              Recorded walkthrough uploaded: {data.exteriorVideo.name}
             </p>
           )}
         </div>
@@ -326,98 +348,146 @@ export default function Page2Exterior({
         )}
 
         {cvResults && (
-          <div className="mt-2 text-xs text-gray-500 flex items-center gap-1.5">
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
             <span>✨</span>
             Items detected automatically have been pre-checked below. Review and correct as needed.
           </div>
         )}
       </div>
 
-      <div className="mb-8">
-        {frameworkError ? (
-          <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700">
-            {frameworkError}
+      {hasExteriorAssessment && (
+        <>
+          <ChecklistSection
+            icon="🔒"
+            title="Exterior security"
+            impact="high"
+            items={exteriorSecurityChecklist}
+            checked={data.exteriorChecked || {}}
+            onToggle={toggleCheck}
+          >
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Additional security details not visible in the video
+              </label>
+              <textarea
+                rows={3}
+                placeholder="e.g. We have a monitored alarm system (ADT), bollards at the entrance, reinforced door frames, keypad entry after hours..."
+                value={data.exteriorNotes || ''}
+                onChange={(event) => onChange({ ...data, exteriorNotes: event.target.value })}
+                className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+              />
+            </div>
+          </ChecklistSection>
+
+          <ChecklistSection
+            icon="📍"
+            title="Location & neighborhood"
+            impact="evaluated"
+            items={locationChecklist}
+            checked={data.locationChecked || {}}
+            onToggle={toggleLocationCheck}
+          >
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Additional location notes
+              </label>
+              <textarea
+                rows={2}
+                placeholder="e.g. We are 0.3 miles from Station 12. We verified FEMA flood map Zone X. ISO Crime Score: 4."
+                value={data.locationNotes || ''}
+                onChange={(event) => onChange({ ...data, locationNotes: event.target.value })}
+                className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+              />
+            </div>
+          </ChecklistSection>
+
+          <div className="mb-8">
+            {frameworkError ? (
+              <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700">
+                {frameworkError}
+              </div>
+            ) : null}
+
+            {!framework && !frameworkError ? (
+              <div className="mb-4 rounded-3xl border border-slate-200 bg-white px-5 py-8 text-center">
+                <p className="text-sm font-semibold text-slate-900">Loading exterior scoring fields...</p>
+                <p className="mt-2 text-sm text-slate-500">Pulling the relevant pillars from the scoring framework.</p>
+              </div>
+            ) : null}
+
+            {pillarSummaries.map((pillar) => {
+              const isOpen = openPillarId === pillar.id
+              const tone = getScoreTone(pillar.points, pillar.max_points)
+
+              return (
+                <section
+                  key={pillar.id}
+                  className="mb-4 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.06)]"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenPillarId(isOpen ? null : pillar.id)}
+                    className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-slate-50 sm:px-5"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2.5 w-2.5 rounded-full ${tone.dot}`} />
+                        <p className="text-base font-semibold text-slate-900 sm:text-lg">{pillar.name}</p>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {pillar.factors.length} relevant scored items on this page
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <ScoreBadge points={pillar.points} maxPoints={pillar.max_points} />
+                      <span className="text-xl text-slate-400">{isOpen ? '−' : '+'}</span>
+                    </div>
+                  </button>
+
+                  {isOpen ? (
+                    <div className="border-t border-slate-200 bg-slate-50/70 px-3 py-2 sm:px-4">
+                      <div className="space-y-2">
+                        {pillar.factors.map((factor) => (
+                          <button
+                            key={factor.id}
+                            type="button"
+                            onClick={() => setSelectedFactor(factor)}
+                            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-transparent bg-white px-4 py-3 text-left transition-colors hover:border-slate-200 hover:bg-slate-50"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-slate-800">{factor.name}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <ScoreBadge points={factor.points} maxPoints={factor.max_points} />
+                              <span className="text-sm text-slate-400">›</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </section>
+              )
+            })}
           </div>
-        ) : null}
 
-        {!framework && !frameworkError ? (
-          <div className="mb-4 rounded-3xl border border-slate-200 bg-white px-5 py-8 text-center">
-            <p className="text-sm font-semibold text-slate-900">Loading exterior scoring fields...</p>
-            <p className="mt-2 text-sm text-slate-500">Pulling the relevant pillars from the scoring framework.</p>
-          </div>
-        ) : null}
-
-        {pillarSummaries.map((pillar) => {
-          const isOpen = openPillarId === pillar.id
-          const tone = getScoreTone(pillar.points, pillar.max_points)
-
-          return (
-            <section
-              key={pillar.id}
-              className="mb-4 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.06)]"
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+            <button
+              onClick={onBack}
+              className="w-full rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:w-auto sm:text-base"
             >
-              <button
-                type="button"
-                onClick={() => setOpenPillarId(isOpen ? null : pillar.id)}
-                className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-slate-50 sm:px-5"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className={`h-2.5 w-2.5 rounded-full ${tone.dot}`} />
-                    <p className="text-base font-semibold text-slate-900 sm:text-lg">{pillar.name}</p>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {pillar.factors.length} relevant scored items on this page
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <ScoreBadge points={pillar.points} maxPoints={pillar.max_points} />
-                  <span className="text-xl text-slate-400">{isOpen ? '−' : '+'}</span>
-                </div>
-              </button>
-
-              {isOpen ? (
-                <div className="border-t border-slate-200 bg-slate-50/70 px-3 py-2 sm:px-4">
-                  <div className="space-y-2">
-                    {pillar.factors.map((factor) => (
-                      <button
-                        key={factor.id}
-                        type="button"
-                        onClick={() => setSelectedFactor(factor)}
-                        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-transparent bg-white px-4 py-3 text-left transition-colors hover:border-slate-200 hover:bg-slate-50"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-slate-800">{factor.name}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <ScoreBadge points={factor.points} maxPoints={factor.max_points} />
-                          <span className="text-sm text-slate-400">›</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </section>
-          )
-        })}
-      </div>
-
-      <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
-        <button
-          onClick={onBack}
-          className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-50 transition-colors"
-        >
-          ← Back
-        </button>
-        <button
-          onClick={onNext}
-          className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-900 text-white text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-700 transition-colors"
-        >
-          Continue to Interior →
-        </button>
-      </div>
+              ← Back
+            </button>
+            <button
+              onClick={onNext}
+              className="w-full rounded-xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-700 sm:w-auto sm:px-8 sm:text-base"
+            >
+              Continue to Summary →
+            </button>
+          </div>
+        </>
+      )}
 
       <FactorDetailModal factor={selectedFactor} onClose={() => setSelectedFactor(null)} />
     </div>

@@ -9,18 +9,18 @@ const ASSESSMENTS = [
       'Your insurer uses this to understand what your business does, how it operates, and what kind of coverage makes sense. It helps them price the policy correctly and avoid coming back later with basic follow-up questions.',
   },
   {
-    key: 'exterior',
-    title: 'Exterior',
-    description: 'Document the storefront, access points, lighting, and neighborhood conditions.',
-    whyThis:
-      'Your insurer wants to see how the outside of the business looks to spot things like access, visibility, lighting, and general upkeep. This helps them judge safety, liability risk, and how easy the property is to protect.',
-  },
-  {
     key: 'interior',
     title: 'Interior',
     description: 'Record fire safety, kitchen systems, and the overall condition of the space.',
     whyThis:
       'Your insurer needs a clear picture of the inside so they can check fire protection, equipment, and the overall condition of the space. This is one of the main ways they estimate property and fire risk.',
+  },
+  {
+    key: 'exterior',
+    title: 'Exterior',
+    description: 'Document the storefront, access points, lighting, and neighborhood conditions.',
+    whyThis:
+      'Your insurer wants to see how the outside of the business looks to spot things like access, visibility, lighting, and general upkeep. This helps them judge safety, liability risk, and how easy the property is to protect.',
   },
 ]
 
@@ -36,7 +36,7 @@ export default function PageStartAssessments({ completion, onStartAssessment }) 
             Assessments
           </div>
           <p className="mt-5 max-w-md text-sm text-gray-600">
-            Finish the business info, exterior, and interior assessments so the insurer has a full underwriting package. We will guide you step by step.
+            Finish the business info, interior, and exterior assessments so the insurer has a full underwriting package. We will guide you step by step.
           </p>
         </div>
 
