@@ -28,24 +28,52 @@ export const HIGH_RISK_NEIGHBORHOODS = [
 ]
 
 export const MEDIUM_RISK_NEIGHBORHOODS = [
-  { name: 'Mission District', city: 'San Francisco', state: 'CA', keywords: ['mission district', 'mission sf'] },
+  { name: 'Mission District', city: 'San Francisco', state: 'CA', keywords: ['mission district', 'mission sf', 'mission'] },
   { name: 'Fillmore', city: 'San Francisco', state: 'CA', keywords: ['fillmore'] },
   { name: 'Inglewood', city: 'Los Angeles', state: 'CA', keywords: ['inglewood'] },
   { name: 'Harlem', city: 'New York', state: 'NY', keywords: ['harlem'] },
   { name: 'Bedford-Stuyvesant', city: 'New York', state: 'NY', keywords: ['bed-stuy', 'bedford-stuyvesant', 'bedford stuyvesant'] },
 ]
 
+function normalizeLocation(value) {
+  return value
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function buildLocationMatchers(input) {
+  const values = Array.isArray(input) ? input : [input]
+  const fullText = normalizeLocation(values.filter(Boolean).join(', '))
+  const segments = values
+    .flatMap((value) => String(value || '').split(','))
+    .map(normalizeLocation)
+    .filter(Boolean)
+
+  return { fullText, segments }
+}
+
+function matchesNeighborhood(matchers, keywords) {
+  return keywords.some((keyword) => {
+    const normalizedKeyword = normalizeLocation(keyword)
+    return matchers.segments.includes(normalizedKeyword) || matchers.fullText.includes(normalizedKeyword)
+  })
+}
+
 export function assessNeighborhoodRisk(address) {
-  if (!address) return null
-  const lower = address.toLowerCase()
+  if (!address || (Array.isArray(address) && address.length === 0)) return null
+
+  const matchers = buildLocationMatchers(address)
 
   for (const n of HIGH_RISK_NEIGHBORHOODS) {
-    if (n.keywords.some(k => lower.includes(k))) {
+    if (matchesNeighborhood(matchers, n.keywords)) {
       return { level: 'high', neighborhood: n.name, city: n.city, state: n.state }
     }
   }
   for (const n of MEDIUM_RISK_NEIGHBORHOODS) {
-    if (n.keywords.some(k => lower.includes(k))) {
+    if (matchesNeighborhood(matchers, n.keywords)) {
       return { level: 'medium', neighborhood: n.name, city: n.city, state: n.state }
     }
   }
