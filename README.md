@@ -1,6 +1,8 @@
 # smb_hackathon
 our name: Simply Covered
 
+Winner of SMB Hackathon: https://cerebralvalley.ai/events/~/e/test-hackathon-25f870ea
+
 ## Framework Viewer
 
 The framework viewer is now part of the main frontend app at `/scoring-framework`.
