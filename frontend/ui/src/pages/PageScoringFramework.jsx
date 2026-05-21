@@ -34,9 +34,9 @@ function getBonusRows(framework) {
   )
 }
 
-function findGradeBand(gradeBands, coreScore) {
+function findGradeBand(gradeBands, score) {
   return (
-    gradeBands.find((band) => coreScore >= band.min_core_score && coreScore <= band.max_core_score) ||
+    gradeBands.find((band) => score >= band.min_core_score && score <= band.max_core_score) ||
     gradeBands[gradeBands.length - 1]
   )
 }
@@ -49,6 +49,10 @@ function getScoreClass(score, max) {
 
 function buildPdfHref() {
   return new URL('/api/scoring-framework/pdf', window.location.origin).toString()
+}
+
+function buildRasterPdfHref() {
+  return new URL('/api/scoring-framework/pdf-raster', window.location.origin).toString()
 }
 
 export default function PageScoringFramework({ onBack }) {
@@ -150,7 +154,8 @@ export default function PageScoringFramework({ onBack }) {
 
   const coreScore = sum(factors.map((row) => row.score))
   const bonusScore = sum(bonuses.map((row) => row.awardedPoints))
-  const gradeBand = findGradeBand(framework.grade_bands, coreScore)
+  const totalScore = coreScore + bonusScore
+  const gradeBand = findGradeBand(framework.grade_bands, totalScore)
   const pillarScores = framework.pillars.map((pillar) => {
     const pillarFactors = factors.filter((row) => row.pillarId === pillar.id)
     return {
@@ -183,9 +188,14 @@ export default function PageScoringFramework({ onBack }) {
               </button>
             ) : null}
             {!isPdfMode ? (
-              <a className="scoring-framework-button" href={buildPdfHref()} download>
-                Download PDF
-              </a>
+              <>
+                <a className="scoring-framework-button scoring-framework-button-secondary" href={buildPdfHref()} download>
+                  Download PDF
+                </a>
+                <a className="scoring-framework-button" href={buildRasterPdfHref()} download>
+                  Download Image PDF
+                </a>
+              </>
             ) : null}
           </div>
         </header>
@@ -198,20 +208,20 @@ export default function PageScoringFramework({ onBack }) {
           </article>
 
           <article className="scoring-framework-example-card">
-            <p className="scoring-framework-example-label">Core Score</p>
+            <p className="scoring-framework-example-label">Final Score</p>
             <div className="scoring-framework-example-grade-row">
               <span className="scoring-framework-example-grade">{gradeBand.grade}</span>
               <div>
-                <strong className="scoring-framework-example-metric">{coreScore}/100</strong>
+                <strong className="scoring-framework-example-metric">{totalScore}/110</strong>
                 <p>{gradeBand.readiness}</p>
               </div>
             </div>
             <div className="scoring-framework-summary">
               <span className="scoring-framework-chip">
-                <strong>{bonusScore}</strong> bonus
+                <strong>{coreScore}</strong> core
               </span>
               <span className="scoring-framework-chip">
-                <strong>{coreScore + bonusScore}</strong> total
+                <strong>{bonusScore}</strong> bonus
               </span>
             </div>
           </article>

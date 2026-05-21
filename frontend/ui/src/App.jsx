@@ -7,12 +7,14 @@ import Page1BusinessInfo from './pages/Page1_BusinessInfo'
 import Page2Exterior from './pages/Page2_Exterior'
 import Page3Interior from './pages/Page3_Interior'
 import Page4Summary from './pages/Page4_Summary'
+import PageFrameworkReference from './pages/PageFrameworkReference'
 import PageScoringFramework from './pages/PageScoringFramework'
 import PageSubmissionSuccess from './pages/PageSubmissionSuccess'
 import { resolveVoiceBusinessPrefill } from './utils/voiceBusinessPrefillService'
 
 const HOME_ROUTE = '/'
 const SCORING_FRAMEWORK_ROUTE = '/scoring-framework'
+const FRAMEWORK_REFERENCE_ROUTE = '/framework'
 const EXTERIOR_RECORD_ROUTE = '/exterior/record'
 const INTERIOR_RECORD_ROUTE = '/interior/record'
 const EXTERIOR_RECORDING_ASSET = '/media/restaurant-exterior-recording.mp4'
@@ -169,6 +171,7 @@ export default function App() {
   const currentStep = SCREEN_TO_STEP[currentScreen] || null
   const headerStep = currentScreen === SCREENS.voiceIntake ? 1 : currentStep
   const isScoringFrameworkRoute = pathname === SCORING_FRAMEWORK_ROUTE
+  const isFrameworkReferenceRoute = pathname === FRAMEWORK_REFERENCE_ROUTE
   const isExteriorRecordRoute = pathname === EXTERIOR_RECORD_ROUTE
   const isInteriorRecordRoute = pathname === INTERIOR_RECORD_ROUTE
   const isRecordRoute = isExteriorRecordRoute || isInteriorRecordRoute
@@ -183,6 +186,10 @@ export default function App() {
 
   if (isScoringFrameworkRoute) {
     return <PageScoringFramework onBack={() => navigate(HOME_ROUTE)} />
+  }
+
+  if (isFrameworkReferenceRoute) {
+    return <PageFrameworkReference onBack={() => navigate(HOME_ROUTE)} />
   }
 
   const screenContent = {

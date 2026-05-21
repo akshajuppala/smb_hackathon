@@ -1,8 +1,11 @@
 import http from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
-import { mkdir, writeFile, appendFile, readFile } from 'node:fs/promises'
+import { execFile } from 'node:child_process'
+import { tmpdir } from 'node:os'
+import { mkdir, writeFile, appendFile, readFile, mkdtemp, rm } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
+import { promisify } from 'node:util'
 import dotenv from 'dotenv'
 import yaml from 'js-yaml'
 import { chromium } from 'playwright'
@@ -26,7 +29,9 @@ const TRACE_LATEST_FILE = path.join(TRACE_DIR, 'voice-prefill-latest.json')
 const TRACE_HISTORY_FILE = path.join(TRACE_DIR, 'voice-prefill-traces.ndjson')
 const SCORING_FRAMEWORK_PATH = path.resolve(process.cwd(), 'src/data/insuranceReadinessFramework.yaml')
 const SCORING_FRAMEWORK_ROUTE = '/scoring-framework'
+const FRAMEWORK_REFERENCE_ROUTE = '/framework'
 const DEFAULT_FRONTEND_ORIGIN = process.env.SCORING_FRAMEWORK_APP_ORIGIN || 'http://127.0.0.1:5173'
+const execFileAsync = promisify(execFile)
 
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
@@ -414,7 +419,35 @@ function getScoringFrameworkOrigin(request) {
 }
 
 async function renderScoringFrameworkPdf(url, request) {
-  const pageUrl = new URL(SCORING_FRAMEWORK_ROUTE, getScoringFrameworkOrigin(request))
+  return renderRoutePdf(url, request, SCORING_FRAMEWORK_ROUTE)
+}
+
+async function renderScoringFrameworkRasterPdf(url, request) {
+  const pdf = await renderRoutePdf(url, request, SCORING_FRAMEWORK_ROUTE)
+
+  return rasterizePdf(pdf)
+}
+
+async function renderFrameworkReferencePdf(url, request) {
+  return renderRoutePdf(url, request, FRAMEWORK_REFERENCE_ROUTE, {
+    landscape: true,
+    optimize: true,
+    viewport: { width: 1500, height: 1100 },
+  })
+}
+
+async function renderFrameworkReferenceRasterPdf(url, request) {
+  const pdf = await renderRoutePdf(url, request, FRAMEWORK_REFERENCE_ROUTE, {
+    landscape: true,
+    optimize: false,
+    viewport: { width: 1500, height: 1100 },
+  })
+
+  return rasterizePdf(pdf)
+}
+
+async function renderRoutePdf(url, request, route, options = {}) {
+  const pageUrl = new URL(route, getScoringFrameworkOrigin(request))
   const search = url.searchParams.get('search')
   const pillar = url.searchParams.get('pillar')
 
@@ -429,21 +462,24 @@ async function renderScoringFrameworkPdf(url, request) {
   }
 
   const browser = await launchBrowser()
-  const page = await browser.newPage({ viewport: { width: 1100, height: 1500 } })
+  const page = await browser.newPage({ viewport: options.viewport || { width: 1100, height: 1500 } })
 
   try {
     await page.emulateMedia({ media: 'screen' })
     await page.goto(pageUrl.toString(), { waitUntil: 'networkidle' })
     await page.waitForFunction(() => document.body.dataset.ready === 'true')
 
-    const pageScale = await getPdfScale(page)
+    if (options.landscape) {
+      await page.addStyleTag({ content: '@page { size: A4 landscape; margin: 10mm; }' })
+    }
 
-    return await page.pdf({
-      format: 'A4',
-      landscape: false,
+    const pageScale = await getPdfScale(page, options.landscape)
+
+    const pdf = await page.pdf({
+      ...(options.landscape ? { width: '297mm', height: '210mm' } : { format: 'A4', landscape: false }),
       scale: pageScale,
-      printBackground: true,
-      preferCSSPageSize: false,
+      printBackground: options.printBackground ?? true,
+      preferCSSPageSize: options.landscape || false,
       margin: {
         top: '10mm',
         right: '10mm',
@@ -451,16 +487,72 @@ async function renderScoringFrameworkPdf(url, request) {
         left: '10mm',
       },
     })
+
+    return options.optimize ? await optimizePdf(pdf) : pdf
   } finally {
     await browser.close()
   }
 }
 
-async function getPdfScale(page) {
+async function optimizePdf(pdf) {
+  const directory = await mkdtemp(path.join(tmpdir(), 'framework-pdf-'))
+  const inputPath = path.join(directory, 'input.pdf')
+  const outputPath = path.join(directory, 'output.pdf')
+
+  try {
+    await writeFile(inputPath, pdf)
+    await execFileAsync('gs', [
+      '-sDEVICE=pdfwrite',
+      '-dCompatibilityLevel=1.7',
+      '-dPDFSETTINGS=/printer',
+      '-dNOPAUSE',
+      '-dBATCH',
+      '-dQUIET',
+      `-sOutputFile=${outputPath}`,
+      inputPath,
+    ])
+
+    return await readFile(outputPath)
+  } catch {
+    return pdf
+  } finally {
+    await rm(directory, { recursive: true, force: true })
+  }
+}
+
+async function rasterizePdf(pdf) {
+  const directory = await mkdtemp(path.join(tmpdir(), 'framework-raster-pdf-'))
+  const inputPath = path.join(directory, 'input.pdf')
+  const outputPath = path.join(directory, 'output.pdf')
+
+  try {
+    await writeFile(inputPath, pdf)
+    await execFileAsync('gs', [
+      '-sDEVICE=pdfimage24',
+      '-r360',
+      '-dTextAlphaBits=4',
+      '-dGraphicsAlphaBits=4',
+      '-dJPEGQ=95',
+      '-dNOPAUSE',
+      '-dBATCH',
+      '-dQUIET',
+      `-sOutputFile=${outputPath}`,
+      inputPath,
+    ])
+
+    return await readFile(outputPath)
+  } catch {
+    return pdf
+  } finally {
+    await rm(directory, { recursive: true, force: true })
+  }
+}
+
+async function getPdfScale(page, landscape = false) {
   const pageWidth = await page.evaluate(() => document.documentElement.scrollWidth)
-  const a4PortraitWidthInches = 8.27
+  const a4WidthInches = landscape ? 11.69 : 8.27
   const horizontalMarginInches = 20 / 25.4
-  const printableWidthPx = (a4PortraitWidthInches - horizontalMarginInches) * 96
+  const printableWidthPx = (a4WidthInches - horizontalMarginInches) * 96
   const scale = printableWidthPx / pageWidth
 
   return Math.max(0.1, Math.min(1, scale))
@@ -542,6 +634,54 @@ const server = http.createServer(async (request, response) => {
     } catch (error) {
       sendJson(response, 500, {
         error: error instanceof Error ? error.message : 'Failed to render scoring PDF',
+      })
+    }
+    return
+  }
+
+  if (url.pathname === '/api/scoring-framework/pdf-raster' && request.method === 'GET') {
+    try {
+      const pdf = await renderScoringFrameworkRasterPdf(url, request)
+      response.writeHead(200, {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="insurance-readiness-framework-image.pdf"',
+      })
+      response.end(pdf)
+    } catch (error) {
+      sendJson(response, 500, {
+        error: error instanceof Error ? error.message : 'Failed to render raster scoring PDF',
+      })
+    }
+    return
+  }
+
+  if (url.pathname === '/api/framework/pdf' && request.method === 'GET') {
+    try {
+      const pdf = await renderFrameworkReferencePdf(url, request)
+      response.writeHead(200, {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="insurance-readiness-framework-reference.pdf"',
+      })
+      response.end(pdf)
+    } catch (error) {
+      sendJson(response, 500, {
+        error: error instanceof Error ? error.message : 'Failed to render framework PDF',
+      })
+    }
+    return
+  }
+
+  if (url.pathname === '/api/framework/pdf-raster' && request.method === 'GET') {
+    try {
+      const pdf = await renderFrameworkReferenceRasterPdf(url, request)
+      response.writeHead(200, {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="insurance-readiness-framework-reference-image.pdf"',
+      })
+      response.end(pdf)
+    } catch (error) {
+      sendJson(response, 500, {
+        error: error instanceof Error ? error.message : 'Failed to render raster framework PDF',
       })
     }
     return
