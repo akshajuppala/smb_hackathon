@@ -449,12 +449,214 @@
 }
 
 .scoring-framework-page-pdf .scoring-framework-shell {
-  width: min(1500px, calc(100vw - 20px));
+  width: min(1040px, calc(100vw - 20px));
   padding: 0 0 20px;
+}
+
+.scoring-framework-page-pdf {
+  min-height: auto;
+  background: #fff;
 }
 
 .scoring-framework-page-pdf .scoring-framework-actions {
   display: none;
+}
+
+.scoring-framework-page-pdf .scoring-framework-topbar {
+  padding: 0 0 14px;
+}
+
+.scoring-framework-page-pdf .scoring-framework-chip,
+.scoring-framework-page-pdf .scoring-framework-grade-card,
+.scoring-framework-page-pdf .scoring-framework-toolbar,
+.scoring-framework-page-pdf .scoring-framework-table-wrap,
+.scoring-framework-page-pdf .scoring-framework-message,
+.scoring-framework-page-pdf .scoring-framework-example-card,
+.scoring-framework-page-pdf .scoring-framework-example-pillar {
+  background: #fff;
+  box-shadow: none;
+}
+
+.scoring-framework-page-pdf .scoring-framework-example-card-accent {
+  background: #f8fafc;
+}
+
+.scoring-framework-page-pdf .scoring-framework-table th {
+  position: static;
+}
+
+.scoring-framework-page-pdf .scoring-framework-table-wrap {
+  overflow: visible;
+}
+
+.scoring-framework-reference-shell {
+  width: min(1600px, calc(100vw - 32px));
+}
+
+.scoring-framework-reference-summary {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.8fr;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.scoring-framework-reference-stats {
+  display: grid;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.scoring-framework-reference-stats span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: #5d6673;
+}
+
+.scoring-framework-reference-stats strong {
+  color: #18212b;
+  font-size: 24px;
+}
+
+.scoring-framework-reference-table {
+  min-width: 720px;
+}
+
+.scoring-framework-reference-table th:nth-child(1) {
+  width: 240px;
+}
+
+.scoring-framework-reference-table th:nth-child(2) {
+  width: auto;
+}
+
+.scoring-framework-reference-bonus-table {
+  min-width: 780px;
+}
+
+.scoring-framework-grade-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.scoring-framework-grade-table td {
+  width: 20%;
+  padding: 3px 8px 5px 0;
+  vertical-align: top;
+}
+
+.scoring-framework-grade-table strong,
+.scoring-framework-grade-table span {
+  display: block;
+}
+
+.scoring-framework-grade-table strong {
+  color: #0f766e;
+}
+
+.scoring-framework-grade-table span {
+  margin-top: 2px;
+  color: #5d6673;
+  line-height: 1.25;
+}
+
+.scoring-framework-rule-text {
+  white-space: pre-line;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-shell {
+  width: 100%;
+  max-width: none;
+  padding-bottom: 8px;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-shell .scoring-framework-topbar {
+  display: block;
+  padding-bottom: 8px;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-shell .scoring-framework-title {
+  font-size: 24px;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-shell .scoring-framework-subtitle {
+  max-width: none;
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-shell .scoring-framework-section {
+  margin-top: 10px;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-shell .scoring-framework-section-title {
+  margin-bottom: 4px;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-shell .scoring-framework-grade-strip {
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-shell .scoring-framework-grade-card {
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-shell .scoring-framework-grade-label {
+  min-width: 20px;
+  min-height: 20px;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-shell .scoring-framework-grade-range {
+  margin-left: 6px;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-shell .scoring-framework-grade-card p {
+  margin-top: 4px;
+  font-size: 9px;
+  line-height: 1.25;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-table,
+.scoring-framework-page-pdf .scoring-framework-reference-bonus-table {
+  width: 100%;
+  min-width: 0;
+  font-size: 10px;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-table th:first-child {
+  width: 170px;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-table th,
+.scoring-framework-page-pdf .scoring-framework-reference-table td,
+.scoring-framework-page-pdf .scoring-framework-reference-bonus-table th,
+.scoring-framework-page-pdf .scoring-framework-reference-bonus-table td {
+  padding: 3px 5px;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-shell .scoring-framework-rule-text {
+  line-height: 1.2;
+}
+
+.scoring-framework-page-pdf .scoring-framework-reference-shell .scoring-framework-points,
+.scoring-framework-page-pdf .scoring-framework-reference-shell .scoring-framework-score-pill {
+  min-width: 0;
+  width: 18px;
+  height: auto;
+  min-height: 0;
+  padding: 1px 3px;
+  border: 1px solid rgba(15, 118, 110, 0.3);
+  border-radius: 4px;
+  background: #edf8f6;
+  color: #0f766e;
+  font-size: 10px;
+  font-weight: 800;
 }
 
 .scoring-framework-example-summary {
@@ -606,7 +808,8 @@
   .scoring-framework-toolbar,
   .scoring-framework-grade-strip,
   .scoring-framework-example-summary,
-  .scoring-framework-example-pillars {
+  .scoring-framework-example-pillars,
+  .scoring-framework-reference-summary {
     grid-template-columns: 1fr;
   }
 }

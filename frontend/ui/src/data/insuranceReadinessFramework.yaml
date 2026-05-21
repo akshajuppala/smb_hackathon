@@ -7,7 +7,7 @@ framework:
   scoring_method:
     core_max_points: 100
     bonus_max_points: 10
-    grade_uses: core_score_only
+    grade_uses: core_plus_bonus_score
     default_rule: "If evidence is missing, expired, contradictory, or cannot be verified, assign the lowest matching score for that factor."
     evidence_rule: "Use the most recent verifiable evidence available at the time of scoring."
     distance_rule: "Distance-based factors use straight-line distance from the parcel centroid to the nearest qualifying feature."
