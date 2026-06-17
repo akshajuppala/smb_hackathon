@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useLanguage } from '../i18n/LanguageContext'
 import { assessNeighborhoodRisk } from '../data/neighborhoodRiskData'
 import { BUSINESS_INFO_FIELD_MAP, BUSINESS_INFO_SECTIONS } from '../data/businessInfoFields'
 import { NAICS_722_LEAF_CODES, NAICS_722_LEAF_CODE_MAP } from '../data/naics722LeafCodes'
 
 function NaicsHelpModal({ open, onClose }) {
+  const { t } = useLanguage()
   const [overlayHost, setOverlayHost] = useState(null)
 
   useEffect(() => {
@@ -20,19 +22,19 @@ function NaicsHelpModal({ open, onClose }) {
       <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-base font-semibold text-gray-900">What is a NAICS classification?</p>
+            <p className="text-base font-semibold text-gray-900">{t('What is a NAICS classification?')}</p>
             <p className="mt-2 text-sm leading-6 text-gray-700">
-              NAICS is a standard business category code. It helps insurance companies understand the type of work your business does so they can review risk more accurately.
+              {t('NAICS is a standard business category code. It helps insurance companies understand the type of work your business does so they can review risk more accurately.')}
             </p>
             <p className="mt-3 text-sm leading-6 text-gray-700">
-              For restaurants, this can help separate a full-service restaurant, bar, caterer, coffee shop, food truck, or similar business. We suggest a code based on the details you enter, and you can refresh it if you update your information.
+              {t('For restaurants, this can help separate a full-service restaurant, bar, caterer, coffee shop, food truck, or similar business. We suggest a code based on the details you enter, and you can refresh it if you update your information.')}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="rounded-lg px-2 py-1 text-sm font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-            aria-label="Close NAICS help"
+            aria-label={t('Close NAICS help')}
           >
             ×
           </button>
@@ -44,7 +46,7 @@ function NaicsHelpModal({ open, onClose }) {
             onClick={onClose}
             className="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
           >
-            Close
+            {t('Close')}
           </button>
         </div>
       </div>
@@ -72,6 +74,7 @@ const NAICS_TRIGGER_FIELDS = new Set([
 ])
 
 export default function Page1BusinessInfo({ data, onChange, onNext }) {
+  const { t } = useLanguage()
   const [riskResult, setRiskResult] = useState(null)
   const [addressLookupError, setAddressLookupError] = useState('')
   const [reviewsLoading, setReviewsLoading] = useState(false)
@@ -114,7 +117,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
         const result = await response.json()
 
         if (!response.ok) {
-          throw new Error(result.details || result.error || 'Address lookup failed')
+          throw new Error(result.details || result.error || t('Address lookup failed'))
         }
 
         const nextData = {
@@ -129,7 +132,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
 
         onChange(nextData)
       } catch (error) {
-        setAddressLookupError(error.message || 'Could not complete the address.')
+        setAddressLookupError(error.message || t('Could not complete the address.'))
       }
     }, 700)
 
@@ -164,7 +167,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
         const result = await response.json()
 
         if (!response.ok) {
-          throw new Error(result.details || result.error || 'Lookup failed')
+          throw new Error(result.details || result.error || t('Lookup failed'))
         }
 
         onChange((currentData) => ({
@@ -174,7 +177,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
           websiteLookupQuery: lookupQuery,
         }))
       } catch (error) {
-        setWebsiteError(error.message || 'Could not find a website yet.')
+        setWebsiteError(error.message || t('Could not find a website yet.'))
       } finally {
         setWebsiteLoading(false)
       }
@@ -220,7 +223,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.details || result.error || 'Could not classify NAICS code')
+        throw new Error(result.details || result.error || t('Could not classify NAICS code'))
       }
 
       if (requestId !== naicsRequestIdRef.current) {
@@ -241,7 +244,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
         return
       }
 
-      setNaicsError(error.message || 'Could not classify NAICS code')
+      setNaicsError(error.message || t('Could not classify NAICS code'))
     } finally {
       if (requestId === naicsRequestIdRef.current) {
         setNaicsLoading(false)
@@ -330,7 +333,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
   function renderInput(field) {
     const commonProps = {
       value: data[field.key] || '',
-      placeholder: field.placeholder,
+      placeholder: field.placeholder ? t(field.placeholder) : field.placeholder,
       className:
         'w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300',
     }
@@ -355,7 +358,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
         >
           {field.options.map((option) => (
             <option key={option.value || 'empty'} value={option.value}>
-              {option.label}
+              {t(option.label)}
             </option>
           ))}
         </select>
@@ -376,7 +379,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
 
     return (
       <div key={field.key}>
-        <label className="block text-xs font-semibold text-gray-600 mb-1.5">{field.label}</label>
+        <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t(field.label)}</label>
         {renderInput(field)}
       </div>
     )
@@ -386,7 +389,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
     return (
       <>
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1.5">Website</label>
+          <label className="block text-xs font-semibold text-gray-600 mb-1.5">{t('Website')}</label>
           <input
             type="url"
             placeholder="https://www.yourrestaurant.com"
@@ -396,13 +399,13 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
           />
           <div className="mt-1 min-h-5 text-xs">
             {websiteLoading ? (
-              <span className="text-blue-600">Looking up website from business name and address...</span>
+              <span className="text-blue-600">{t('Looking up website from business name and address...')}</span>
             ) : websiteError ? (
               <span className="text-orange-600">{websiteError}</span>
             ) : data.websiteUrl ? (
-              <span className="text-green-600">Website found automatically.</span>
+              <span className="text-green-600">{t('Website found automatically.')}</span>
             ) : (
-              <span className="text-gray-500">We will try to auto-fill this after you enter the business name and address.</span>
+              <span className="text-gray-500">{t('We will try to auto-fill this after you enter the business name and address.')}</span>
             )}
           </div>
         </div>
@@ -410,9 +413,9 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
         <div className="rounded-2xl border border-blue-200 bg-blue-50/80 p-4">
           <div className="flex flex-col gap-3">
             <div>
-              <p className="text-sm font-semibold text-blue-950">NAICS classification</p>
+              <p className="text-sm font-semibold text-blue-950">{t('NAICS classification')}</p>
               <p className="mt-1 text-xs text-blue-900/80">
-                This is the business category code insurance companies use to understand what kind of restaurant or food business you run.
+                {t('This is the business category code insurance companies use to understand what kind of restaurant or food business you run.')}
               </p>
             </div>
           </div>
@@ -425,9 +428,9 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
                 value={data.selectedNaicsCode || ''}
                 onChange={(event) => handleNaicsSelectChange(event.target.value)}
                 className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
-                aria-label="Business category"
+                aria-label={t('Business category')}
               >
-                <option value="">Choose the closest match...</option>
+                <option value="">{t('Choose the closest match...')}</option>
                 {NAICS_722_LEAF_CODES.map((entry) => (
                   <option key={entry.code} value={entry.code}>
                     {entry.code} - {entry.name}
@@ -438,7 +441,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
               <div className="pointer-events-none flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
-                    {showingSuggestedNaics ? 'Suggested' : 'Business category'}
+                    {showingSuggestedNaics ? t('Suggested') : t('Business category')}
                   </p>
                   {selectedNaicsEntry ? (
                     <p className="mt-1 text-sm text-gray-900">
@@ -446,7 +449,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
                       <span className="text-gray-700">{selectedNaicsEntry.name}</span>
                     </p>
                   ) : (
-                    <p className="mt-1 text-sm text-gray-500">Choose the closest match...</p>
+                    <p className="mt-1 text-sm text-gray-500">{t('Choose the closest match...')}</p>
                   )}
                 </div>
 
@@ -468,7 +471,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
               onClick={() => setShowNaicsHelp(true)}
               className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-blue-900 transition-colors hover:bg-blue-100"
             >
-              What is this?
+              {t('What is this?')}
             </button>
             <button
               type="button"
@@ -476,7 +479,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
               disabled={naicsLoading}
               className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-blue-900 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {naicsLoading ? 'Updating...' : 'Refresh'}
+              {naicsLoading ? t('Updating...') : t('Refresh')}
             </button>
           </div>
         </div>
@@ -496,7 +499,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
       <div key={section.key} className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-5">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">{section.icon}</span>
-          <h3 className="font-semibold text-gray-800">{section.title}</h3>
+          <h3 className="font-semibold text-gray-800">{t(section.title)}</h3>
         </div>
 
         {section.key === 'aboutYou' && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{standardFields.map((field) => renderStandardField(field.key))}</div>}
@@ -513,7 +516,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
                     checked={!!data[field.key]}
                     onChange={(event) => handleChange(field.key, event.target.checked)}
                   />
-                  {field.label}
+                  {t(field.label)}
                 </label>
               ))}
             </div>
@@ -530,23 +533,23 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
                 <div className={`flex items-start gap-2 ${RISK_STYLES[riskResult.level].text}`}>
                   <span className="text-lg">{RISK_STYLES[riskResult.level].icon}</span>
                   <div>
-                    <p className="font-semibold text-sm">{RISK_STYLES[riskResult.level].title}</p>
+                    <p className="font-semibold text-sm">{t(RISK_STYLES[riskResult.level].title)}</p>
                     {riskResult.neighborhood ? (
                       <p className="text-xs mt-1">
                         {data.resolvedNeighborhood ? (
                           <>
-                            Address resolves to <strong>{data.resolvedNeighborhood}</strong>
-                            {data.resolvedSecondaryArea ? <> near <strong>{data.resolvedSecondaryArea}</strong></> : null}
-                            . This location also matches <strong>{riskResult.neighborhood}</strong> in {riskResult.city}, {riskResult.state} as a known high-risk area for insurance purposes. Expect higher property and liability premiums. Document all security measures carefully.
+                            {t('Address resolves to')} <strong>{data.resolvedNeighborhood}</strong>
+                            {data.resolvedSecondaryArea ? <> {t('near')} <strong>{data.resolvedSecondaryArea}</strong></> : null}
+                            {t('. This location also matches')} <strong>{riskResult.neighborhood}</strong> {t('in')} {riskResult.city}, {riskResult.state} {t('as a known high-risk area for insurance purposes. Expect higher property and liability premiums. Document all security measures carefully.')}
                           </>
                         ) : (
                           <>
-                            Address matches <strong>{riskResult.neighborhood}</strong> in {riskResult.city}, {riskResult.state} — a known high-risk area for insurance purposes. Expect higher property and liability premiums. Document all security measures carefully.
+                            {t('Address matches')} <strong>{riskResult.neighborhood}</strong> {t('in')} {riskResult.city}, {riskResult.state} {t('— a known high-risk area for insurance purposes. Expect higher property and liability premiums. Document all security measures carefully.')}
                           </>
                         )}
                       </p>
                     ) : (
-                      <p className="text-xs mt-1">No high-risk neighborhood flags detected for this address. This does not replace a full ISO crime score lookup by your insurer.</p>
+                      <p className="text-xs mt-1">{t('No high-risk neighborhood flags detected for this address. This does not replace a full ISO crime score lookup by your insurer.')}</p>
                     )}
                     {addressLookupError && <p className="text-xs mt-2 text-orange-700">{addressLookupError}</p>}
                   </div>
@@ -566,8 +569,8 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
   return (
     <div>
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">Tell us about your restaurant</h2>
-        <p className="text-gray-500 text-sm">We'll use this to prepare your insurance risk assessment.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">{t('Tell us about your restaurant')}</h2>
+        <p className="text-gray-500 text-sm">{t("We'll use this to prepare your insurance risk assessment.")}</p>
       </div>
 
       {data.voicePrefillApplied && (
@@ -575,9 +578,9 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
           <div className="flex items-start gap-3">
             <span className="text-xl">✨</span>
             <div>
-              <p className="text-sm font-semibold text-teal-900">Voice notes applied</p>
+              <p className="text-sm font-semibold text-teal-900">{t('Voice notes applied')}</p>
               <p className="mt-1 text-sm text-teal-800">
-                We prefilled this form from your voice intake. Review the fields below and adjust anything before continuing.
+                {t('We prefilled this form from your voice intake. Review the fields below and adjust anything before continuing.')}
               </p>
             </div>
           </div>
@@ -589,14 +592,14 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
       <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 mb-8">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xl">⭐</span>
-          <h3 className="font-semibold text-gray-800">Google Reviews — Slip & Fall Liability Check</h3>
+          <h3 className="font-semibold text-gray-800">{t('Google Reviews — Slip & Fall Liability Check')}</h3>
         </div>
-        <p className="text-xs text-gray-500 mb-4">We scan your public Google Reviews for mentions of slips, falls, wet floors, or unsafe conditions that could affect your liability exposure.</p>
+        <p className="text-xs text-gray-500 mb-4">{t('We scan your public Google Reviews for mentions of slips, falls, wet floors, or unsafe conditions that could affect your liability exposure.')}</p>
 
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <input
             type="text"
-            placeholder="Google Maps URL or business name + city"
+            placeholder={t('Google Maps URL or business name + city')}
             value={data.googlePlaceUrl || ''}
             onChange={(event) => handleChange('googlePlaceUrl', event.target.value)}
             className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
@@ -606,7 +609,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
             disabled={!data.businessName || reviewsLoading}
             className="px-4 py-2.5 bg-gray-900 text-white text-sm rounded-lg font-medium hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
           >
-            {reviewsLoading ? 'Scanning...' : 'Scan reviews'}
+            {reviewsLoading ? t('Scanning...') : t('Scan reviews')}
           </button>
         </div>
 
@@ -616,7 +619,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
             </svg>
-            Scraping and analyzing reviews...
+            {t('Scraping and analyzing reviews...')}
           </div>
         )}
 
@@ -624,17 +627,17 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
           <div className="mt-4 space-y-3">
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-gray-500">Total reviews</p>
+                <p className="text-xs text-gray-500">{t('Total reviews')}</p>
                 <p className="font-bold text-gray-900 text-lg">{reviewsResult.total}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-gray-500">Avg. rating</p>
+                <p className="text-xs text-gray-500">{t('Avg. rating')}</p>
                 <p className="font-bold text-gray-900 text-lg">⭐ {reviewsResult.rating}</p>
               </div>
               <div className={`rounded-lg p-3 text-center ${
                 reviewsResult.slipFallMentions > 3 ? 'bg-red-50' : reviewsResult.slipFallMentions > 0 ? 'bg-orange-50' : 'bg-green-50'
               }`}>
-                <p className="text-xs text-gray-500">Slip/fall mentions</p>
+                <p className="text-xs text-gray-500">{t('Slip/fall mentions')}</p>
                 <p className={`font-bold text-lg ${
                   reviewsResult.slipFallMentions > 3 ? 'text-red-600' : reviewsResult.slipFallMentions > 0 ? 'text-orange-600' : 'text-green-600'
                 }`}>
@@ -645,7 +648,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
 
             {reviewsResult.excerpts.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-gray-600">Flagged review excerpts:</p>
+                <p className="text-xs font-semibold text-gray-600">{t('Flagged review excerpts:')}</p>
                 {reviewsResult.excerpts.map((ex, index) => (
                   <div key={index} className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-2.5">
                     <p className="text-sm text-gray-800 italic">{ex.text}</p>
@@ -653,7 +656,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
                   </div>
                 ))}
                 <p className="text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
-                  ⚠️ <strong>Liability note:</strong> Recurring slip/fall mentions in reviews may increase general liability premiums. Consider floor matting, wet floor signage, and documenting your maintenance schedule.
+                  ⚠️ <strong>{t('Liability note:')}</strong> {t('Recurring slip/fall mentions in reviews may increase general liability premiums. Consider floor matting, wet floor signage, and documenting your maintenance schedule.')}
                 </p>
               </div>
             )}
@@ -666,7 +669,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
           onClick={onNext}
           className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-900 text-white text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-700 transition-colors"
         >
-          Continue to Interior →
+          {t('Continue to Interior')} →
         </button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
 import './scoringFramework.css'
 
 function getInitialViewState() {
@@ -25,6 +26,7 @@ function buildRasterPdfHref() {
 }
 
 export default function PageFrameworkReference({ onBack }) {
+  const { t } = useLanguage()
   const initialViewState = getInitialViewState()
   const [framework, setFramework] = useState(null)
   const [error, setError] = useState('')
@@ -77,8 +79,8 @@ export default function PageFrameworkReference({ onBack }) {
     return (
       <main className="scoring-framework-error">
         <section className="scoring-framework-message">
-          <h1>Framework reference failed to load</h1>
-          <p>The frontend server could not load the scoring framework.</p>
+          <h1>{t('Framework reference failed to load')}</h1>
+          <p>{t('The frontend server could not load the scoring framework.')}</p>
           <pre>{error}</pre>
         </section>
       </main>
@@ -89,8 +91,8 @@ export default function PageFrameworkReference({ onBack }) {
     return (
       <main className="scoring-framework-loading">
         <section className="scoring-framework-message">
-          <h1>Loading framework reference</h1>
-          <p>Preparing the scoring rubric from the framework data.</p>
+          <h1>{t('Loading framework reference')}</h1>
+          <p>{t('Preparing the scoring rubric from the framework data.')}</p>
         </section>
       </main>
     )
@@ -105,14 +107,14 @@ export default function PageFrameworkReference({ onBack }) {
       <div className="scoring-framework-shell scoring-framework-reference-shell">
         <header className="scoring-framework-topbar">
           <div>
-            <p className="scoring-framework-kicker">Framework Reference</p>
+            <p className="scoring-framework-kicker">{t('Framework Reference')}</p>
             <h1 className="scoring-framework-title">{framework.name}</h1>
             <p className="scoring-framework-subtitle">
-              Version {framework.version} - {framework.status}
+              {t('Version')} {framework.version} - {framework.status}
             </p>
             <p className="scoring-framework-subtitle">
-              Core score is out of {scoringMethod.core_max_points} points. Bonus opportunities can add up to{' '}
-              {scoringMethod.bonus_max_points} points and count toward the final grade band.
+              {t('Core score is out of')} {scoringMethod.core_max_points} {t('points. Bonus opportunities can add up to')}{' '}
+              {scoringMethod.bonus_max_points} {t('points and count toward the final grade band.')}
             </p>
           </div>
 
@@ -123,16 +125,16 @@ export default function PageFrameworkReference({ onBack }) {
                 className="scoring-framework-button scoring-framework-button-secondary"
                 onClick={onBack}
               >
-                Back to assessment
+                {t('Back to assessment')}
               </button>
             ) : null}
             {!isPdfMode ? (
               <>
                 <a className="scoring-framework-button scoring-framework-button-secondary" href={buildPdfHref()} download>
-                  Download PDF
+                  {t('Download PDF')}
                 </a>
                 <a className="scoring-framework-button" href={buildRasterPdfHref()} download>
-                  Download Image PDF
+                  {t('Download Image PDF')}
                 </a>
               </>
             ) : null}
@@ -141,8 +143,8 @@ export default function PageFrameworkReference({ onBack }) {
 
         <section className="scoring-framework-section">
           <div className="scoring-framework-section-title">
-            <h2>Grade Bands</h2>
-            <span>Core plus awarded bonus points</span>
+            <h2>{t('Grade Bands')}</h2>
+            <span>{t('Core plus awarded bonus points')}</span>
           </div>
 
           {isPdfMode ? (
@@ -154,7 +156,7 @@ export default function PageFrameworkReference({ onBack }) {
                       <strong>
                         {band.grade} {band.min_core_score}-{band.max_core_score}
                       </strong>
-                      <span>{band.readiness}</span>
+                      <span>{t(band.readiness)}</span>
                     </td>
                   ))}
                 </tr>
@@ -168,7 +170,7 @@ export default function PageFrameworkReference({ onBack }) {
                   <span className="scoring-framework-grade-range">
                     {band.min_core_score}-{band.max_core_score}
                   </span>
-                  <p>{band.readiness}</p>
+                  <p>{t(band.readiness)}</p>
                 </article>
               ))}
             </div>
@@ -177,16 +179,16 @@ export default function PageFrameworkReference({ onBack }) {
 
         <section className="scoring-framework-section">
           <div className="scoring-framework-section-title">
-            <h2>Factor Rubric</h2>
-            <span>{factorCount} factors</span>
+            <h2>{t('Factor Rubric')}</h2>
+            <span>{factorCount} {t('factors')}</span>
           </div>
 
           <div className="scoring-framework-table-wrap">
             <table className="scoring-framework-table scoring-framework-reference-table">
               <thead>
                 <tr>
-                  <th>Factor</th>
-                  <th>Score Options</th>
+                  <th>{t('Factor')}</th>
+                  <th>{t('Score Options')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -195,22 +197,22 @@ export default function PageFrameworkReference({ onBack }) {
                     <tr className="scoring-framework-divider">
                       <td colSpan="2">
                         <div className="scoring-framework-divider-content">
-                          <strong>{pillar.name}</strong>
-                          <span>{pillar.max_points} core points</span>
+                          <strong>{t(pillar.name)}</strong>
+                          <span>{pillar.max_points} {t('core points')}</span>
                         </div>
                       </td>
                     </tr>
                     {pillar.factors.map((factor) => (
                       <tr key={factor.id}>
                         <td>
-                          <strong>{factor.name}</strong>
+                          <strong>{t(factor.name)}</strong>
                         </td>
                         <td>
                           <ol className="scoring-framework-rule-list">
                             {factor.scoring_rules.map((rule) => (
                               <li key={`${factor.id}-${rule.points}`} className="scoring-framework-rule">
                                 <span className="scoring-framework-points">{rule.points}</span>
-                                <span>{rule.when}</span>
+                                <span>{t(rule.when)}</span>
                               </li>
                             ))}
                           </ol>
@@ -226,18 +228,18 @@ export default function PageFrameworkReference({ onBack }) {
 
         <section className="scoring-framework-section">
           <div className="scoring-framework-section-title">
-            <h2>Bonus Paths</h2>
-            <span>{bonusCount} paths</span>
+            <h2>{t('Bonus Paths')}</h2>
+            <span>{bonusCount} {t('paths')}</span>
           </div>
 
           <div className="scoring-framework-table-wrap">
             <table className="scoring-framework-table scoring-framework-reference-bonus-table">
               <thead>
                 <tr>
-                  <th>Pillar</th>
-                  <th>Bonus</th>
-                  <th>Points</th>
-                  <th>What Counts</th>
+                  <th>{t('Pillar')}</th>
+                  <th>{t('Bonus')}</th>
+                  <th>{t('Points')}</th>
+                  <th>{t('What Counts')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -245,17 +247,17 @@ export default function PageFrameworkReference({ onBack }) {
                   pillar.bonus_opportunities.map((bonus) => (
                     <tr key={bonus.id}>
                       <td>
-                        <strong>{pillar.name}</strong>
+                        <strong>{t(pillar.name)}</strong>
                       </td>
                       <td>
-                        <strong>{bonus.name}</strong>
+                        <strong>{t(bonus.name)}</strong>
                       </td>
                       <td className="scoring-framework-numeric">
                         <span className="scoring-framework-score-pill scoring-framework-score-pill-strong">
                           +{bonus.points}
                         </span>
                       </td>
-                      <td>{bonus.what_counts}</td>
+                      <td>{t(bonus.what_counts)}</td>
                     </tr>
                   ))
                 )}

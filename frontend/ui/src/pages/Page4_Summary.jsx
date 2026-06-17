@@ -5,6 +5,7 @@ import {
   getPillarSummary,
   getScoreTone,
 } from '../data/scoringSelection'
+import { useLanguage } from '../i18n/LanguageContext'
 
 function ScoreBadge({ points, maxPoints }) {
   const tone = getScoreTone(points, maxPoints)
@@ -17,6 +18,7 @@ function ScoreBadge({ points, maxPoints }) {
 }
 
 function FactorDetailModal({ factor, onClose }) {
+  const { t } = useLanguage()
   const [overlayHost, setOverlayHost] = useState(null)
 
   useEffect(() => {
@@ -33,14 +35,14 @@ function FactorDetailModal({ factor, onClose }) {
         <div className="border-b border-slate-200 px-4 py-3">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Scoring detail</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{t('Scoring detail')}</p>
               <h3 className="mt-1 text-base font-bold text-slate-900">{factor.name}</h3>
             </div>
             <button
               type="button"
               onClick={onClose}
               className="rounded-full px-2 py-1 text-lg font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
-              aria-label="Close score details"
+              aria-label={t('Close score details')}
             >
               ×
             </button>
@@ -53,14 +55,14 @@ function FactorDetailModal({ factor, onClose }) {
 
         <div className="max-h-[min(70vh,30rem)] space-y-4 overflow-y-auto px-4 py-4">
           <section>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Why this matters</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{t('Why this matters')}</p>
             <p className="mt-2 text-sm leading-6 text-slate-700">{factor.why_this_matters}</p>
           </section>
 
           <section>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
               <div className="flex items-start justify-between gap-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Current score</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{t('Current score')}</p>
                 <span className="text-sm font-semibold text-slate-900">
                   {factor.points}/{factor.max_points}
                 </span>
@@ -70,7 +72,7 @@ function FactorDetailModal({ factor, onClose }) {
           </section>
 
           <section>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Possible scores</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{t('Possible scores')}</p>
             <div className="mt-2 space-y-1.5">
               {factor.scoring_rules.map((rule, index) => {
                 const isCurrentRule = rule.when === factor.selectedRule.when && rule.points === factor.selectedRule.points
@@ -100,6 +102,7 @@ function FactorDetailModal({ factor, onClose }) {
 }
 
 export default function Page4Summary({ onBack, onSubmit }) {
+  const { t } = useLanguage()
   const [framework, setFramework] = useState(null)
   const [error, setError] = useState('')
   const [openPillarId, setOpenPillarId] = useState(null)
@@ -114,7 +117,7 @@ export default function Page4Summary({ onBack, onSubmit }) {
         const response = await fetch('/api/scoring-framework')
 
         if (!response.ok) {
-          throw new Error(`Failed to load framework data: ${response.status}`)
+          throw new Error(`${t('Failed to load framework data:')} ${response.status}`)
         }
 
         const payload = await response.json()
@@ -124,7 +127,7 @@ export default function Page4Summary({ onBack, onSubmit }) {
         }
       } catch (loadError) {
         if (!isCancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'Failed to load framework data.')
+          setError(loadError instanceof Error ? loadError.message : t('Failed to load framework data.'))
         }
       }
     }
@@ -149,9 +152,9 @@ export default function Page4Summary({ onBack, onSubmit }) {
   return (
     <div>
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">Readiness summary</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">{t('Readiness summary')}</h2>
         <p className="text-gray-500 text-sm">
-          Review the four scoring pillars, expand any section, and tap an item to see why it matters and how scoring works.
+          {t('Review the four scoring pillars, expand any section, and tap an item to see why it matters and how scoring works.')}
         </p>
       </div>
 
@@ -163,8 +166,8 @@ export default function Page4Summary({ onBack, onSubmit }) {
 
       {!framework && !error ? (
         <div className="mb-6 rounded-3xl border border-slate-200 bg-white px-5 py-8 text-center">
-          <p className="text-sm font-semibold text-slate-900">Loading scoring summary...</p>
-          <p className="mt-2 text-sm text-slate-500">Pulling the framework and preparing the pillar breakdown.</p>
+          <p className="text-sm font-semibold text-slate-900">{t('Loading scoring summary...')}</p>
+          <p className="mt-2 text-sm text-slate-500">{t('Pulling the framework and preparing the pillar breakdown.')}</p>
         </div>
       ) : null}
 
@@ -188,7 +191,7 @@ export default function Page4Summary({ onBack, onSubmit }) {
                   <p className="text-base font-semibold text-slate-900 sm:text-lg">{pillar.name}</p>
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
-                  {pillar.factors.length} scored items in this pillar
+                  {pillar.factors.length} {t('scored items in this pillar')}
                 </p>
               </div>
 
@@ -230,7 +233,7 @@ export default function Page4Summary({ onBack, onSubmit }) {
           disabled={isSubmitting}
           className="w-full rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:w-auto sm:text-base"
         >
-          ← Back
+          ← {t('Back')}
         </button>
         <button
           onClick={handleSubmit}
@@ -244,10 +247,10 @@ export default function Page4Summary({ onBack, onSubmit }) {
                   aria-hidden="true"
                   className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
                 />
-                Emailing your assessment...
+                {t('Emailing your assessment...')}
               </>
             ) : (
-              'email me my assessment'
+              t('email me my assessment')
             )}
           </span>
         </button>

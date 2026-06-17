@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
 
 const DEEPGRAM_MODEL = 'nova-3'
 const MEDIA_RECORDER_TIMESLICE_MS = 250
@@ -37,6 +38,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
   const [isSupported, setIsSupported] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [statusMessage, setStatusMessage] = useState('')
+  const { t } = useLanguage()
 
   useEffect(() => {
     setIsSupported(isVoiceCaptureSupported())
@@ -79,12 +81,12 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
 
   async function handleStartListening() {
     if (!isVoiceCaptureSupported()) {
-      setErrorMessage('Voice capture is not supported in this browser.')
+      setErrorMessage(t('Voice capture is not supported in this browser.'))
       return
     }
 
     if (!DEEPGRAM_API_KEY) {
-      setErrorMessage('Missing DEEPGRAM_API_KEY in the frontend environment.')
+      setErrorMessage(t('Missing DEEPGRAM_API_KEY in the frontend environment.'))
       return
     }
 
@@ -94,7 +96,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
     sessionIdRef.current = sessionId
 
     setErrorMessage('')
-    setStatusMessage('Requesting microphone access...')
+    setStatusMessage(t('Requesting microphone access...'))
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -105,7 +107,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
       }
 
       mediaStreamRef.current = stream
-      setStatusMessage('Connecting to Deepgram...')
+      setStatusMessage(t('Connecting to Deepgram...'))
 
       const socketUrl = new URL('wss://api.deepgram.com/v1/listen')
       socketUrl.searchParams.set('model', DEEPGRAM_MODEL)
@@ -140,13 +142,13 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
         }
 
         recorder.onerror = () => {
-          setErrorMessage('Microphone audio capture failed.')
+          setErrorMessage(t('Microphone audio capture failed.'))
           stopListening()
         }
 
         recorder.start(MEDIA_RECORDER_TIMESLICE_MS)
         setIsListening(true)
-        setStatusMessage('Listening. Tap to stop.')
+        setStatusMessage(t('Listening. Tap to stop.'))
       }
 
       socket.onmessage = (event) => {
@@ -183,7 +185,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
       socket.onerror = () => {
         if (sessionIdRef.current !== sessionId) return
 
-        setErrorMessage('Deepgram connection failed. Check your API key and network access.')
+        setErrorMessage(t('Deepgram connection failed. Check your API key and network access.'))
         stopListening()
       }
 
@@ -195,7 +197,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
         setTranscript((currentTranscript) => finalTranscriptRef.current || currentTranscript)
 
         if (!event.wasClean) {
-          setErrorMessage('Deepgram stopped unexpectedly.')
+          setErrorMessage(t('Deepgram stopped unexpectedly.'))
         }
 
         setStatusMessage('')
@@ -205,7 +207,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
       setIsListening(false)
       setStatusMessage('')
       setErrorMessage(
-        error?.name === 'NotAllowedError' ? 'Microphone access was blocked.' : error?.message || 'Voice capture stopped unexpectedly.',
+        error?.name === 'NotAllowedError' ? t('Microphone access was blocked.') : error?.message || t('Voice capture stopped unexpectedly.'),
       )
     }
   }
@@ -224,7 +226,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
     try {
       await onContinue(transcript.trim())
     } catch (error) {
-      setErrorMessage(error?.message || 'We could not prefill the business information.')
+      setErrorMessage(error?.message || t('We could not prefill the business information.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -233,20 +235,20 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
   return (
     <div className="space-y-5">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">Tell us about your restaurant</h2>
-        <p className="text-gray-500 text-sm">We&apos;ll use this to prepare your insurance risk assessment.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">{t('Tell us about your restaurant')}</h2>
+        <p className="text-gray-500 text-sm">{t("We'll use this to prepare your insurance risk assessment.")}</p>
       </div>
 
       <div className="overflow-hidden rounded-[28px] border border-gray-200 bg-white shadow-sm">
         <div className="bg-gradient-to-br from-orange-100 via-amber-50 to-teal-50 px-5 py-6 sm:px-6">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-600 shadow-sm">
             <span className="text-sm">🎙️</span>
-            Voice Intake
+            {t('Voice Intake')}
           </div>
           <ul className="mt-4 max-w-md list-disc space-y-1 pl-5 text-sm text-gray-600 marker:text-orange-500">
-            <li>What is the name of your business and what is the address?</li>
-            <li>Who are your customers? What food do you serve?</li>
-            <li>Do you serve alcohol?</li>
+            <li>{t('What is the name of your business and what is the address?')}</li>
+            <li>{t('Who are your customers? What food do you serve?')}</li>
+            <li>{t('Do you serve alcohol?')}</li>
           </ul>
         </div>
 
@@ -261,18 +263,18 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
                   ? 'border-red-300 bg-red-500 shadow-[0_0_0_14px_rgba(239,68,68,0.12)]'
                   : 'border-gray-200 bg-gray-950 shadow-[0_20px_40px_rgba(17,24,39,0.18)] hover:scale-[1.02]'
               } disabled:cursor-not-allowed disabled:opacity-50`}
-              aria-label={isListening ? 'Stop listening' : 'Start talking'}
+              aria-label={isListening ? t('Stop listening') : t('Start talking')}
             >
               <span className={`text-5xl ${isListening ? 'animate-pulse' : ''}`}>🎤</span>
               <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
-                {isListening ? 'Tap to stop' : 'Tap to talk'}
+                {isListening ? t('Tap to stop') : t('Tap to talk')}
               </span>
             </button>
           </div>
 
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <label className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Captured notes</label>
+              <label className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">{t('Captured notes')}</label>
               {errorMessage ? (
                 <span className="text-xs font-medium text-red-600">{errorMessage}</span>
               ) : statusMessage ? (
@@ -286,7 +288,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
               {transcript ? (
                 <p className="whitespace-pre-wrap">{transcript}</p>
               ) : (
-                <p className="text-gray-400">Your transcript will appear here as you talk.</p>
+                <p className="text-gray-400">{t('Your transcript will appear here as you talk.')}</p>
               )}
             </div>
           </div>
@@ -300,7 +302,7 @@ export default function Page0VoiceBusinessIntake({ initialTranscript = '', onCon
           disabled={isSubmitting}
           className="w-full rounded-2xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
         >
-          {isSubmitting ? 'Prefilling business info...' : 'Next step'}
+          {isSubmitting ? t('Prefilling business info...') : t('Next step')}
         </button>
       </div>
     </div>
