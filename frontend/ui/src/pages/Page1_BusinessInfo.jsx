@@ -334,6 +334,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
     const commonProps = {
       value: data[field.key] || '',
       placeholder: field.placeholder ? t(field.placeholder) : field.placeholder,
+      autoComplete: 'off',
       className:
         'w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300',
     }
@@ -393,6 +394,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
           <input
             type="url"
             placeholder="https://www.yourrestaurant.com"
+            autoComplete="off"
             value={data.websiteUrl || ''}
             onChange={(event) => handleChange('websiteUrl', event.target.value)}
             className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
@@ -600,6 +602,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
           <input
             type="text"
             placeholder={t('Google Maps URL or business name + city')}
+            autoComplete="off"
             value={data.googlePlaceUrl || ''}
             onChange={(event) => handleChange('googlePlaceUrl', event.target.value)}
             className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
