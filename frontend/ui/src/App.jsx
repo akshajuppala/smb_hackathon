@@ -23,6 +23,15 @@ const INTERIOR_RECORDING_ASSET = '/media/restaurant-interior-recording.mp4'
 const EXTERIOR_RECORDING_FILE_NAME = 'exterior-recording.mp4'
 const INTERIOR_RECORDING_FILE_NAME = 'restaurant-interior-recording.mp4'
 
+// Timed CV detection badges shown over the interior walkthrough video.
+// Timestamps match the moments the detected objects appear on screen.
+const INTERIOR_DETECTIONS = [
+  { id: 'camera', label: 'Camera detected', start: 2.0, end: 4.5 },
+  { id: 'extinguisher', label: 'Fire extinguisher detected', start: 20.8, end: 23.3 },
+  { id: 'sprinkler', label: 'Sprinkler detected', start: 27.8, end: 30.3 },
+  { id: 'sprinkler-2', label: 'Sprinkler detected', start: 34.8, end: 35.9 },
+]
+
 const SCREENS = {
   start: 'start',
   voiceIntake: 'voice-intake',
@@ -265,6 +274,7 @@ export default function App() {
       onBack={() => navigate(HOME_ROUTE)}
       onFinish={handleFinishInteriorRecording}
       videoSrc={INTERIOR_RECORDING_ASSET}
+      detections={INTERIOR_DETECTIONS}
     />
   ) : (
     screenContent[currentScreen]
