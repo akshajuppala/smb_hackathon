@@ -10,7 +10,6 @@ const MOCK_CV_RESULTS = [
   { id: 'entrance_clear', label: 'Entrance unobstructed and level', detected: true },
 ]
 
-const DEFAULT_OPEN_PILLAR_ID = 'property_physical_risk'
 const EXTERIOR_FACTOR_IDS_BY_PILLAR = {
   property_physical_risk: [
     'construction_type',
@@ -196,7 +195,7 @@ export default function Page2Exterior({
   const [cvResults, setCvResults] = useState(null)
   const [framework, setFramework] = useState(null)
   const [frameworkError, setFrameworkError] = useState('')
-  const [openPillarId, setOpenPillarId] = useState(DEFAULT_OPEN_PILLAR_ID)
+  const [openPillarId, setOpenPillarId] = useState(null)
   const [selectedFactor, setSelectedFactor] = useState(null)
   const hasExteriorAssessment = Boolean(data.exteriorVideo)
 

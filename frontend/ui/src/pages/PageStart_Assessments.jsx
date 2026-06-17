@@ -84,7 +84,7 @@ export default function PageStartAssessments({ completion, onStartAssessment }) 
       </div>
 
       {activeAssessment ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 px-4">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-gray-900/40 px-4">
           <div
             role="dialog"
             aria-modal="true"

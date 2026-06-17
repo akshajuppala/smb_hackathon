@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-const DEFAULT_OPEN_PILLAR_ID = 'property_physical_risk'
 const MOCK_RULE_INDEX_BY_FACTOR_ID = {
   sprinkler_system: 2,
   security_cameras: 1,
@@ -170,7 +169,7 @@ function FactorDetailModal({ factor, onClose }) {
 export default function Page4Summary({ onBack, onSubmit }) {
   const [framework, setFramework] = useState(null)
   const [error, setError] = useState('')
-  const [openPillarId, setOpenPillarId] = useState(DEFAULT_OPEN_PILLAR_ID)
+  const [openPillarId, setOpenPillarId] = useState(null)
   const [selectedFactor, setSelectedFactor] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
