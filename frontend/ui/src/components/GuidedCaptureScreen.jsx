@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
 
 function DetectionBadge({ label }) {
   return (
@@ -21,6 +22,7 @@ export default function GuidedCaptureScreen({
   imageSrc,
   detections = [],
 }) {
+  const { t } = useLanguage()
   const videoRef = useRef(null)
   const [hasStartedPlayback, setHasStartedPlayback] = useState(false)
   const [activeDetection, setActiveDetection] = useState(null)
@@ -70,7 +72,7 @@ export default function GuidedCaptureScreen({
       {imageSrc ? (
         <img
           src={imageSrc}
-          alt="Captured storefront preview"
+          alt={t('Captured storefront preview')}
           className="absolute inset-0 h-full w-full object-cover"
         />
       ) : videoSrc ? (
@@ -88,7 +90,7 @@ export default function GuidedCaptureScreen({
               <button
                 type="button"
                 onClick={handleStartPlayback}
-                aria-label="Start video playback"
+                aria-label={t('Start video playback')}
                 className="pointer-events-auto inline-flex h-20 w-20 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white shadow-[0_18px_48px_rgba(0,0,0,0.35)] backdrop-blur-md transition hover:scale-[1.02]"
               >
                 <svg
@@ -122,13 +124,13 @@ export default function GuidedCaptureScreen({
               onClick={onBack}
               className="inline-flex items-center rounded-full border border-white/20 bg-black/35 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm"
             >
-              Back
+              {t('Back')}
             </button>
           )}
           <div className="pt-[6.5rem]">
             <div className="bg-white/85 backdrop-blur-md rounded-[1.5rem] border border-white/40 p-5 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9a6f48] mb-2">
-                Prompt
+                {t('Prompt')}
               </p>
               <h3 className="text-xl font-semibold text-gray-900 leading-snug">
                 {message}
@@ -139,7 +141,7 @@ export default function GuidedCaptureScreen({
               {activeDetection ? (
                 <DetectionBadge
                   key={activeDetection}
-                  label={detections.find((d) => d.id === activeDetection)?.label}
+                  label={t(detections.find((d) => d.id === activeDetection)?.label ?? '')}
                 />
               ) : null}
             </div>
@@ -155,7 +157,7 @@ export default function GuidedCaptureScreen({
               onClick={onFinish}
               className="w-full rounded-xl bg-[#f6c35b] px-4 py-3 text-sm font-semibold text-gray-900"
             >
-              Done
+              {t('Done')}
             </button>
           </div>
         </div>

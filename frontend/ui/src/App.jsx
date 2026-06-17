@@ -11,6 +11,7 @@ import PageFrameworkReference from './pages/PageFrameworkReference'
 import PageScoringFramework from './pages/PageScoringFramework'
 import PageSubmissionSuccess from './pages/PageSubmissionSuccess'
 import { resolveVoiceBusinessPrefill } from './utils/voiceBusinessPrefillService'
+import { useLanguage } from './i18n/LanguageContext'
 
 const HOME_ROUTE = '/'
 const SCORING_FRAMEWORK_ROUTE = '/scoring-framework'
@@ -63,6 +64,12 @@ const ASSESSMENT_TO_SCREEN = {
 }
 
 function LanguageToggle() {
+  const { lang, setLang } = useLanguage()
+  const activeClass =
+    'rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white'
+  const inactiveClass =
+    'rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600'
+
   return (
     <div
       className="inline-flex items-center rounded-full border border-amber-200 bg-white/90 p-0.5 shadow-sm"
@@ -71,15 +78,17 @@ function LanguageToggle() {
     >
       <button
         type="button"
-        className="rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white"
-        aria-pressed="true"
+        className={lang === 'en' ? activeClass : inactiveClass}
+        aria-pressed={lang === 'en'}
+        onClick={() => setLang('en')}
       >
         EN
       </button>
       <button
         type="button"
-        className="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600"
-        aria-pressed="false"
+        className={lang === 'es' ? activeClass : inactiveClass}
+        aria-pressed={lang === 'es'}
+        onClick={() => setLang('es')}
       >
         ESP
       </button>
@@ -104,6 +113,7 @@ function computeCompletion(formData) {
 }
 
 export default function App() {
+  const { t } = useLanguage()
   const [currentScreen, setCurrentScreen] = useState(SCREENS.start)
   const [formData, setFormData] = useState({})
   const [pathname, setPathname] = useState(getCurrentPath)
@@ -263,14 +273,14 @@ export default function App() {
 
   const pageContent = isExteriorRecordRoute ? (
     <GuidedCaptureScreen
-      message="Start by showing the storefront, main entrance, windows, lighting, and parking area."
+      message={t('Start by showing the storefront, main entrance, windows, lighting, and parking area.')}
       onBack={() => navigate(HOME_ROUTE)}
       onFinish={handleFinishExteriorRecording}
       imageSrc={EXTERIOR_PLACEHOLDER_ASSET}
     />
   ) : isInteriorRecordRoute ? (
     <GuidedCaptureScreen
-      message="Start with the ceiling and sprinklers, then capture the kitchen line, dining area, exits, and utility spaces."
+      message={t('Start with the ceiling and sprinklers, then capture the kitchen line, dining area, exits, and utility spaces.')}
       onBack={() => navigate(HOME_ROUTE)}
       onFinish={handleFinishInteriorRecording}
       videoSrc={INTERIOR_RECORDING_ASSET}
@@ -321,9 +331,9 @@ export default function App() {
                       </div>
                       {shouldHideWelcomeHeader ? null : (
                         <h1 className="mt-8 max-w-xl text-center text-gray-900 sm:mt-10 mx-auto">
-                          <span className="block text-[2rem] font-extrabold leading-none sm:text-[2.4rem]">Good Evening!</span>
+                          <span className="block text-[2rem] font-extrabold leading-none sm:text-[2.4rem]">{t('Good Morning!')}</span>
                           <span className="mt-2 block text-lg font-semibold leading-snug text-slate-700 sm:text-[1.35rem]">
-                            Ready to start your Insurance Readiness Check?
+                            {t('Ready to start your Insurance Readiness Check?')}
                           </span>
                         </h1>
                       )}
