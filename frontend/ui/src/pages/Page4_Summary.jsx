@@ -1,78 +1,11 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import {
+  getFrameworkPayload,
+  getPillarSummary,
+  getScoreTone,
+} from '../data/scoringSelection'
 import { useLanguage } from '../i18n/LanguageContext'
-
-const MOCK_RULE_INDEX_BY_FACTOR_ID = {
-  sprinkler_system: 2,
-  security_cameras: 1,
-}
-
-function getFrameworkPayload(payload) {
-  return payload?.framework || payload
-}
-
-function getSelectedRule(factor) {
-  const preferredRuleIndex = MOCK_RULE_INDEX_BY_FACTOR_ID[factor.id]
-
-  if (preferredRuleIndex !== undefined) {
-    return factor.scoring_rules[Math.min(preferredRuleIndex, factor.scoring_rules.length - 1)]
-  }
-
-  return factor.scoring_rules.reduce((lowestRule, rule) => {
-    if (!lowestRule) {
-      return rule
-    }
-
-    return rule.points < lowestRule.points ? rule : lowestRule
-  }, null)
-}
-
-function getFactorScore(factor) {
-  const selectedRule = getSelectedRule(factor)
-
-  return {
-    ...factor,
-    points: selectedRule?.points ?? 0,
-    selectedRule,
-  }
-}
-
-function getPillarSummary(pillar) {
-  const factors = pillar.factors.map(getFactorScore)
-  const points = factors.reduce((total, factor) => total + factor.points, 0)
-
-  return {
-    ...pillar,
-    factors,
-    points,
-  }
-}
-
-function getScoreTone(points, maxPoints) {
-  const ratio = maxPoints > 0 ? points / maxPoints : 0
-
-  if (ratio >= 0.75) {
-    return {
-      badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-      dot: 'bg-emerald-500',
-      text: 'text-emerald-700',
-    }
-  }
-
-  if (ratio >= 0.4) {
-    return {
-      badge: 'bg-amber-100 text-amber-700 border-amber-200',
-      dot: 'bg-amber-500',
-      text: 'text-amber-700',
-    }
-  }
-
-  return {
-    badge: 'bg-rose-100 text-rose-700 border-rose-200',
-    dot: 'bg-rose-500',
-    text: 'text-rose-700',
-  }
-}
 
 function ScoreBadge({ points, maxPoints }) {
   const tone = getScoreTone(points, maxPoints)
@@ -97,7 +30,7 @@ function FactorDetailModal({ factor, onClose }) {
   }
 
   return createPortal(
-    <div className="absolute inset-x-0 bottom-0 top-14 z-50 flex items-end justify-center bg-slate-950/45 px-3 pb-3 pt-6">
+    <div className="absolute inset-0 z-50 flex items-end justify-center bg-slate-950/45 px-3 pb-3 pt-6">
       <div className="w-full max-w-lg overflow-hidden rounded-[28px] bg-white shadow-2xl">
         <div className="border-b border-slate-200 px-4 py-3">
           <div className="flex items-start justify-between gap-4">
@@ -214,7 +147,7 @@ export default function Page4Summary({ onBack, onSubmit }) {
     onSubmit()
   }
 
-  const pillarSummaries = framework?.pillars?.map(getPillarSummary) || []
+  const pillarSummaries = framework?.pillars?.map((pillar) => getPillarSummary(pillar)) || []
 
   return (
     <div>
