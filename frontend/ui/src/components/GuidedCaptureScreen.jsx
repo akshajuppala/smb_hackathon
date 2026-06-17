@@ -1,23 +1,57 @@
 import { useEffect, useRef, useState } from 'react'
 
+function DetectionBadge({ label }) {
+  return (
+    <div className="detection-badge">
+      <span className="detection-badge__icon">
+        <svg className="detection-badge__check" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 12.5 10 17.5 19 7" />
+        </svg>
+      </span>
+      <span className="detection-badge__label">{label}</span>
+    </div>
+  )
+}
+
 export default function GuidedCaptureScreen({
   message = 'Start by showing the storefront and main entrance.',
   onBack,
   onFinish,
   videoSrc,
   imageSrc,
+  detections = [],
 }) {
   const videoRef = useRef(null)
   const [hasStartedPlayback, setHasStartedPlayback] = useState(false)
+  const [activeDetection, setActiveDetection] = useState(null)
 
   useEffect(() => {
     setHasStartedPlayback(false)
+    setActiveDetection(null)
 
     if (videoRef.current) {
       videoRef.current.pause()
       videoRef.current.currentTime = 0
     }
   }, [videoSrc])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || detections.length === 0) return undefined
+
+    function syncDetection() {
+      const t = video.currentTime
+      const current = detections.find((d) => t >= d.start && t < d.end)
+      setActiveDetection(current ? current.id : null)
+    }
+
+    video.addEventListener('timeupdate', syncDetection)
+    video.addEventListener('seeked', syncDetection)
+    return () => {
+      video.removeEventListener('timeupdate', syncDetection)
+      video.removeEventListener('seeked', syncDetection)
+    }
+  }, [detections, videoSrc])
 
   async function handleStartPlayback() {
     if (!videoRef.current) return
@@ -92,13 +126,22 @@ export default function GuidedCaptureScreen({
             </button>
           )}
           <div className="pt-[6.5rem]">
-            <div className="bg-white rounded-[1.5rem] border border-[#eadfce] p-5 shadow-sm">
+            <div className="bg-white/85 backdrop-blur-md rounded-[1.5rem] border border-white/40 p-5 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9a6f48] mb-2">
                 Prompt
               </p>
               <h3 className="text-xl font-semibold text-gray-900 leading-snug">
                 {message}
               </h3>
+            </div>
+
+            <div className="pointer-events-none mt-3 flex justify-center">
+              {activeDetection ? (
+                <DetectionBadge
+                  key={activeDetection}
+                  label={detections.find((d) => d.id === activeDetection)?.label}
+                />
+              ) : null}
             </div>
           </div>
         </div>
