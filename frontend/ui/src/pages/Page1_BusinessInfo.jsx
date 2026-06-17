@@ -432,7 +432,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
         </div>
 
         {showNaicsHelp && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
             <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -650,7 +650,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
           onClick={onNext}
           className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gray-900 text-white text-sm sm:text-base rounded-xl font-semibold hover:bg-gray-700 transition-colors"
         >
-          Continue to Exterior →
+          Continue to Interior →
         </button>
       </div>
     </div>

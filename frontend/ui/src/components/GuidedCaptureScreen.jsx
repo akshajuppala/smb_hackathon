@@ -5,6 +5,7 @@ export default function GuidedCaptureScreen({
   onBack,
   onFinish,
   videoSrc,
+  imageSrc,
 }) {
   const videoRef = useRef(null)
   const [hasStartedPlayback, setHasStartedPlayback] = useState(false)
@@ -32,7 +33,13 @@ export default function GuidedCaptureScreen({
 
   return (
     <div className="h-full bg-black text-white relative overflow-hidden">
-      {videoSrc ? (
+      {imageSrc ? (
+        <img
+          src={imageSrc}
+          alt="Captured storefront preview"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : videoSrc ? (
         <>
           <video
             ref={videoRef}

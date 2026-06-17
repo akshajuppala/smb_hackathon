@@ -10,7 +10,6 @@ const MOCK_CV_INTERIOR = [
   { id: 'structural_damage', label: 'No visible water stains, mold, or damage', detected: true },
 ]
 
-const DEFAULT_OPEN_PILLAR_ID = 'property_physical_risk'
 const MOCK_RULE_INDEX_BY_FACTOR_ID = {
   sprinkler_system: 2,
   fire_alarm_system: 1,
@@ -199,7 +198,7 @@ export default function Page3Interior({
   const [cvResults, setCvResults] = useState(null)
   const [framework, setFramework] = useState(null)
   const [frameworkError, setFrameworkError] = useState('')
-  const [openPillarId, setOpenPillarId] = useState(DEFAULT_OPEN_PILLAR_ID)
+  const [openPillarId, setOpenPillarId] = useState(null)
   const [selectedFactor, setSelectedFactor] = useState(null)
   const hasInteriorAssessment = Boolean(data.interiorVideo)
 
@@ -380,7 +379,7 @@ export default function Page3Interior({
               onClick={onNext}
               className="w-full rounded-xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-700 sm:w-auto sm:px-8 sm:text-base"
             >
-              Continue to Summary →
+              Continue to Exterior →
             </button>
           </div>
         </>

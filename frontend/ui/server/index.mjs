@@ -735,6 +735,8 @@ const server = http.createServer(async (request, response) => {
 
       sendJson(response, 200, { prefill })
     } catch (error) {
+      console.error(`[voice-prefill] trace ${traceId} failed:`, error)
+
       await writeTrace({
         traceId,
         timestamp: new Date().toISOString(),

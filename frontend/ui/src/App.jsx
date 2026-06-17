@@ -18,6 +18,7 @@ const FRAMEWORK_REFERENCE_ROUTE = '/framework'
 const EXTERIOR_RECORD_ROUTE = '/exterior/record'
 const INTERIOR_RECORD_ROUTE = '/interior/record'
 const EXTERIOR_RECORDING_ASSET = '/media/restaurant-exterior-recording.mp4'
+const EXTERIOR_PLACEHOLDER_ASSET = '/media/restaurant-exterior-placeholder.png'
 const INTERIOR_RECORDING_ASSET = '/media/restaurant-interior-recording.mp4'
 const EXTERIOR_RECORDING_FILE_NAME = 'exterior-recording.mp4'
 const INTERIOR_RECORDING_FILE_NAME = 'restaurant-interior-recording.mp4'
@@ -256,7 +257,7 @@ export default function App() {
       message="Start by showing the storefront, main entrance, windows, lighting, and parking area."
       onBack={() => navigate(HOME_ROUTE)}
       onFinish={handleFinishExteriorRecording}
-      videoSrc={EXTERIOR_RECORDING_ASSET}
+      imageSrc={EXTERIOR_PLACEHOLDER_ASSET}
     />
   ) : isInteriorRecordRoute ? (
     <GuidedCaptureScreen
