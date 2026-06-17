@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from 'react'
 import { scoringFrameworkRestaurantProfile } from '../data/scoringFrameworkRestaurantProfile'
+import { useLanguage } from '../i18n/LanguageContext'
 import './scoringFramework.css'
 
 function getInitialViewState() {
@@ -56,6 +57,7 @@ function buildRasterPdfHref() {
 }
 
 export default function PageScoringFramework({ onBack }) {
+  const { t } = useLanguage()
   const initialViewState = getInitialViewState()
   const [framework, setFramework] = useState(null)
   const [error, setError] = useState('')
@@ -108,8 +110,8 @@ export default function PageScoringFramework({ onBack }) {
     return (
       <main className="scoring-framework-error">
         <section className="scoring-framework-message">
-          <h1>Framework viewer failed to load</h1>
-          <p>The frontend server could not load the scoring framework.</p>
+          <h1>{t('Framework viewer failed to load')}</h1>
+          <p>{t('The frontend server could not load the scoring framework.')}</p>
           <pre>{error}</pre>
         </section>
       </main>
@@ -120,8 +122,8 @@ export default function PageScoringFramework({ onBack }) {
     return (
       <main className="scoring-framework-loading">
         <section className="scoring-framework-message">
-          <h1>Loading scoring framework</h1>
-          <p>Preparing the restaurant submission from the framework data.</p>
+          <h1>{t('Loading scoring framework')}</h1>
+          <p>{t('Preparing the restaurant submission from the framework data.')}</p>
         </section>
       </main>
     )
@@ -169,12 +171,12 @@ export default function PageScoringFramework({ onBack }) {
       <div className="scoring-framework-shell">
         <header className="scoring-framework-topbar">
           <div>
-            <p className="scoring-framework-kicker">Restaurant Submission</p>
+            <p className="scoring-framework-kicker">{t('Restaurant Submission')}</p>
             <h1 className="scoring-framework-title">{scoringFrameworkRestaurantProfile.businessName}</h1>
             <p className="scoring-framework-subtitle">
-              {scoringFrameworkRestaurantProfile.profile}
+              {t(scoringFrameworkRestaurantProfile.profile)}
             </p>
-            <p className="scoring-framework-subtitle">{scoringFrameworkRestaurantProfile.underwritingSummary}</p>
+            <p className="scoring-framework-subtitle">{t(scoringFrameworkRestaurantProfile.underwritingSummary)}</p>
           </div>
 
           <div className="scoring-framework-actions">
@@ -184,16 +186,16 @@ export default function PageScoringFramework({ onBack }) {
                 className="scoring-framework-button scoring-framework-button-secondary"
                 onClick={onBack}
               >
-                Back to assessment
+                {t('Back to assessment')}
               </button>
             ) : null}
             {!isPdfMode ? (
               <>
                 <a className="scoring-framework-button scoring-framework-button-secondary" href={buildPdfHref()} download>
-                  Download PDF
+                  {t('Download PDF')}
                 </a>
                 <a className="scoring-framework-button" href={buildRasterPdfHref()} download>
-                  Download Image PDF
+                  {t('Download Image PDF')}
                 </a>
               </>
             ) : null}
@@ -202,44 +204,44 @@ export default function PageScoringFramework({ onBack }) {
 
         <section className="scoring-framework-example-summary">
           <article className="scoring-framework-example-card scoring-framework-example-card-accent">
-            <p className="scoring-framework-example-label">Business</p>
+            <p className="scoring-framework-example-label">{t('Business')}</p>
             <h2>{scoringFrameworkRestaurantProfile.businessName}</h2>
-            <p>{scoringFrameworkRestaurantProfile.profile}</p>
+            <p>{t(scoringFrameworkRestaurantProfile.profile)}</p>
           </article>
 
           <article className="scoring-framework-example-card">
-            <p className="scoring-framework-example-label">Final Score</p>
+            <p className="scoring-framework-example-label">{t('Final Score')}</p>
             <div className="scoring-framework-example-grade-row">
               <span className="scoring-framework-example-grade">{gradeBand.grade}</span>
               <div>
                 <strong className="scoring-framework-example-metric">{totalScore}/110</strong>
-                <p>{gradeBand.readiness}</p>
+                <p>{t(gradeBand.readiness)}</p>
               </div>
             </div>
             <div className="scoring-framework-summary">
               <span className="scoring-framework-chip">
-                <strong>{coreScore}</strong> core
+                <strong>{coreScore}</strong> {t('core')}
               </span>
               <span className="scoring-framework-chip">
-                <strong>{bonusScore}</strong> bonus
+                <strong>{bonusScore}</strong> {t('bonus')}
               </span>
             </div>
           </article>
 
           <article className="scoring-framework-example-card">
-            <p className="scoring-framework-example-label">Strengths</p>
+            <p className="scoring-framework-example-label">{t('Strengths')}</p>
             <ul className="scoring-framework-example-list">
               {scoringFrameworkRestaurantProfile.strengths.map((item) => (
-                <li key={item}>{item}</li>
+                <li key={item}>{t(item)}</li>
               ))}
             </ul>
           </article>
 
           <article className="scoring-framework-example-card">
-            <p className="scoring-framework-example-label">Main Gaps</p>
+            <p className="scoring-framework-example-label">{t('Main Gaps')}</p>
             <ul className="scoring-framework-example-list">
               {scoringFrameworkRestaurantProfile.gaps.map((item) => (
-                <li key={item}>{item}</li>
+                <li key={item}>{t(item)}</li>
               ))}
             </ul>
           </article>
@@ -247,14 +249,14 @@ export default function PageScoringFramework({ onBack }) {
 
         <section className="scoring-framework-section">
           <div className="scoring-framework-section-title">
-            <h2>Pillar Scores</h2>
-            <span>{pillarScores.length} pillars</span>
+            <h2>{t('Pillar Scores')}</h2>
+            <span>{pillarScores.length} {t('pillars')}</span>
           </div>
 
           <div className="scoring-framework-example-pillars">
             {pillarScores.map((pillar) => (
               <article key={pillar.id} className="scoring-framework-example-pillar">
-                <span>{pillar.name}</span>
+                <span>{t(pillar.name)}</span>
                 <strong>
                   {pillar.score}/{pillar.max_points}
                 </strong>
@@ -265,20 +267,20 @@ export default function PageScoringFramework({ onBack }) {
 
         <section className="scoring-framework-section">
           <div className="scoring-framework-section-title">
-            <h2>Scored Factors</h2>
-            <span>{factors.length} rows</span>
+            <h2>{t('Scored Factors')}</h2>
+            <span>{factors.length} {t('rows')}</span>
           </div>
 
           <div className="scoring-framework-table-wrap">
             <table className="scoring-framework-table">
               <thead>
                 <tr>
-                  <th>Pillar</th>
-                  <th>Factor</th>
-                  <th>Score</th>
-                  <th>Matched Rule</th>
-                  <th>Evidence</th>
-                  <th>Underwriting Notes</th>
+                  <th>{t('Pillar')}</th>
+                  <th>{t('Factor')}</th>
+                  <th>{t('Score')}</th>
+                  <th>{t('Matched Rule')}</th>
+                  <th>{t('Evidence')}</th>
+                  <th>{t('Underwriting Notes')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -292,8 +294,8 @@ export default function PageScoringFramework({ onBack }) {
                         <tr className="scoring-framework-divider">
                           <td colSpan="6">
                             <div className="scoring-framework-divider-content">
-                              <strong>{row.pillarName}</strong>
-                              <span>{row.pillarMax} core points</span>
+                              <strong>{t(row.pillarName)}</strong>
+                              <span>{row.pillarMax} {t('core points')}</span>
                             </div>
                           </td>
                         </tr>
@@ -301,15 +303,15 @@ export default function PageScoringFramework({ onBack }) {
                       <tr>
                         <td>
                           <div className="scoring-framework-pillar-cell">
-                            <strong>{row.pillarName}</strong>
+                            <strong>{t(row.pillarName)}</strong>
                             <span className="scoring-framework-pillar-meta">
-                              {row.pillarMax} pts
+                              {row.pillarMax} {t('pts')}
                             </span>
                           </div>
                         </td>
                         <td>
                           <div className="scoring-framework-name-cell">
-                            <strong>{row.name}</strong>
+                            <strong>{t(row.name)}</strong>
                           </div>
                         </td>
                         <td className="scoring-framework-numeric">
@@ -317,9 +319,9 @@ export default function PageScoringFramework({ onBack }) {
                             {row.score}/{row.max_points}
                           </span>
                         </td>
-                        <td>{row.matchedRule}</td>
-                        <td>{row.evidence}</td>
-                        <td>{row.note}</td>
+                        <td>{t(row.matchedRule)}</td>
+                        <td>{t(row.evidence)}</td>
+                        <td>{t(row.note)}</td>
                       </tr>
                     </Fragment>
                   )
@@ -331,28 +333,28 @@ export default function PageScoringFramework({ onBack }) {
 
         <section className="scoring-framework-section">
           <div className="scoring-framework-section-title">
-            <h2>Bonus Paths</h2>
-            <span>{bonuses.length} rows</span>
+            <h2>{t('Bonus Paths')}</h2>
+            <span>{bonuses.length} {t('rows')}</span>
           </div>
 
           <div className="scoring-framework-table-wrap">
             <table className="scoring-framework-table">
               <thead>
                 <tr>
-                  <th>Pillar</th>
-                  <th>Bonus</th>
-                  <th>Outcome</th>
-                  <th>Notes</th>
+                  <th>{t('Pillar')}</th>
+                  <th>{t('Bonus')}</th>
+                  <th>{t('Outcome')}</th>
+                  <th>{t('Notes')}</th>
                 </tr>
               </thead>
               <tbody>
                 {bonuses.map((row) => (
                   <tr key={row.id}>
                     <td>
-                      <strong>{row.pillarName}</strong>
+                      <strong>{t(row.pillarName)}</strong>
                     </td>
                     <td>
-                      <strong>{row.name}</strong>
+                      <strong>{t(row.name)}</strong>
                     </td>
                     <td className="scoring-framework-numeric">
                       <span
@@ -365,7 +367,7 @@ export default function PageScoringFramework({ onBack }) {
                         {row.awarded ? `+${row.points}` : '+0'}
                       </span>
                     </td>
-                    <td>{row.note}</td>
+                    <td>{t(row.note)}</td>
                   </tr>
                 ))}
               </tbody>

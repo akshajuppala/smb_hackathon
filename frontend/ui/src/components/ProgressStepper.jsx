@@ -1,4 +1,5 @@
 import { Fragment } from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
 
 const STEPS = [
   { number: 1, label: 'Business', fullLabel: 'Business Info' },
@@ -8,6 +9,7 @@ const STEPS = [
 ]
 
 export default function ProgressStepper({ currentStep, completion = {}, onStepClick }) {
+  const { t } = useLanguage()
   const clickable = typeof onStepClick === 'function'
 
   return (
@@ -45,15 +47,15 @@ export default function ProgressStepper({ currentStep, completion = {}, onStepCl
                   isCurrent ? 'text-gray-900' : 'text-gray-400'
                 }`}
               >
-                <span className="sm:hidden">{step.label}</span>
-                <span className="hidden sm:inline">{step.fullLabel}</span>
+                <span className="sm:hidden">{t(step.label)}</span>
+                <span className="hidden sm:inline">{t(step.fullLabel)}</span>
               </span>
               <span
                 className={`mt-0.5 text-[9px] sm:text-[10px] font-medium ${
                   isComplete ? 'text-green-600' : isCurrent ? 'text-transparent' : 'text-orange-500'
                 }`}
               >
-                {isComplete ? 'Complete' : 'Incomplete'}
+                {isComplete ? t('Complete') : t('Incomplete')}
               </span>
             </div>
             {i < STEPS.length - 1 && (
