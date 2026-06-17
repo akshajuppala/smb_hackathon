@@ -1,7 +1,57 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { assessNeighborhoodRisk } from '../data/neighborhoodRiskData'
 import { BUSINESS_INFO_FIELD_MAP, BUSINESS_INFO_SECTIONS } from '../data/businessInfoFields'
 import { NAICS_722_LEAF_CODES, NAICS_722_LEAF_CODE_MAP } from '../data/naics722LeafCodes'
+
+function NaicsHelpModal({ open, onClose }) {
+  const [overlayHost, setOverlayHost] = useState(null)
+
+  useEffect(() => {
+    setOverlayHost(document.querySelector('.phone-screen'))
+  }, [])
+
+  if (!open || !overlayHost) {
+    return null
+  }
+
+  return createPortal(
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-base font-semibold text-gray-900">What is a NAICS classification?</p>
+            <p className="mt-2 text-sm leading-6 text-gray-700">
+              NAICS is a standard business category code. It helps insurance companies understand the type of work your business does so they can review risk more accurately.
+            </p>
+            <p className="mt-3 text-sm leading-6 text-gray-700">
+              For restaurants, this can help separate a full-service restaurant, bar, caterer, coffee shop, food truck, or similar business. We suggest a code based on the details you enter, and you can refresh it if you update your information.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg px-2 py-1 text-sm font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+            aria-label="Close NAICS help"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>,
+    overlayHost
+  )
+}
 
 const RISK_STYLES = {
   high: { bg: 'bg-red-50 border-red-300', icon: '⚠️', title: 'High-Risk Neighborhood Detected', text: 'text-red-700' },
@@ -431,41 +481,7 @@ export default function Page1BusinessInfo({ data, onChange, onNext }) {
           </div>
         </div>
 
-        {showNaicsHelp && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
-            <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-base font-semibold text-gray-900">What is a NAICS classification?</p>
-                  <p className="mt-2 text-sm leading-6 text-gray-700">
-                    NAICS is a standard business category code. It helps insurance companies understand the type of work your business does so they can review risk more accurately.
-                  </p>
-                  <p className="mt-3 text-sm leading-6 text-gray-700">
-                    For restaurants, this can help separate a full-service restaurant, bar, caterer, coffee shop, food truck, or similar business. We suggest a code based on the details you enter, and you can refresh it if you update your information.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowNaicsHelp(false)}
-                  className="rounded-lg px-2 py-1 text-sm font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-                  aria-label="Close NAICS help"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="mt-5 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowNaicsHelp(false)}
-                  className="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <NaicsHelpModal open={showNaicsHelp} onClose={() => setShowNaicsHelp(false)} />
       </>
     )
   }
